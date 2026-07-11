@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { Plus, Trash2, X } from 'lucide-react'
+import { Plus, Trash2, X, Calendar, User, Tag, Sparkles, AlertCircle, FileText } from 'lucide-react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
-// Validasi Form
 const batchSchema = z.object({
   kode_batch: z.string().min(1, 'Kode batch wajib diisi'),
   jenis_coklat: z.enum(['Fermentasi', 'Non-Fermentasi']),
@@ -54,7 +53,6 @@ export function AdminBatchesPage() {
   // Mutation Tambah Batch
   const addMutation = useMutation({
     mutationFn: async (newData: BatchForm) => {
-      // otomatis set jumlah_sisa = jumlah_masuk saat awal
       const { error } = await supabase.from('batches').insert([{
         ...newData,
         jumlah_sisa: newData.jumlah_masuk,
@@ -89,7 +87,7 @@ export function AdminBatchesPage() {
     addMutation.mutate(data)
   }
 
-  // Set Expired 1 Tahun Otomatis saat Tanggal Masuk diisi
+  // Set Expired 1 Tahun Otomatis
   const handleTanggalMasukChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value
     if (val) {
@@ -100,137 +98,315 @@ export function AdminBatchesPage() {
   }
 
   return (
-    <div className="p-4 pb-24 h-full overflow-y-auto">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-xl font-bold text-primary">Stok Masuk</h1>
-          <p className="text-sm text-text-muted">Kelola data batch coklat</p>
+    <div className="pb-28 min-h-screen overflow-y-auto" style={{ backgroundColor: '#FAF7F2' }}>
+      {/* Header Kakao Premium dengan Tombol Tambah */}
+      <div
+        className="px-6 pt-10 pb-16 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #361E1C 0%, #1F0F0E 100%)',
+          borderBottomLeftRadius: '48px',
+          borderBottomRightRadius: '48px',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.15)',
+        }}
+      >
+        <div className="absolute -top-16 -right-16 pointer-events-none opacity-[0.03] animate-float">
+          <Plus className="w-64 h-64 text-white" />
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-primary hover:bg-primary-hover text-white p-2 rounded-lg flex items-center gap-2 text-sm shadow-sm transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">Tambah</span>
-        </button>
+
+        <div className="relative z-10 flex justify-between items-center">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-3xl font-serif font-black tracking-tight text-white">
+              Stok Masuk
+            </h1>
+            <p className="text-xs font-medium text-white/60 tracking-wide mt-0.5">
+              Kelola daftar batch biji kakao
+            </p>
+          </div>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl transition-all duration-300 shadow-md cursor-pointer border hover:scale-[1.02]"
+            style={{ 
+              backgroundColor: '#D4A373', 
+              borderColor: '#E8DCC4',
+              color: '#4A2C2A'
+            }}
+          >
+            <Plus className="w-4 h-4 text-[#4A2C2A] stroke-[3]" />
+            <span className="text-xs font-extrabold uppercase tracking-wider">Tambah Batch</span>
+          </button>
+        </div>
       </div>
 
-      {isLoading ? (
-        <p className="text-center text-text-muted mt-10 animate-pulse">Memuat data...</p>
-      ) : batches?.length === 0 ? (
-        <div className="text-center py-10 bg-white rounded-xl border border-border">
-          <p className="text-text-muted">Belum ada stok coklat.</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {batches?.map((batch) => (
-            <div key={batch.id} className="bg-white p-4 rounded-xl border border-border shadow-sm flex flex-col gap-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-text-primary">{batch.kode_batch}</h3>
-                  <span className={`inline-block px-2 py-1 text-[10px] font-medium rounded-full mt-1 ${
-                    batch.jenis_coklat === 'Fermentasi' ? 'bg-secondary/10 text-secondary' : 'bg-warning/10 text-warning'
-                  }`}>
-                    {batch.jenis_coklat}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-text-muted">Sisa Stok</p>
-                  <p className="text-lg font-bold text-primary">{batch.jumlah_sisa} <span className="text-xs font-normal">Kg</span></p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-2 text-xs text-text-muted bg-background p-2 rounded-lg">
-                <p>Masuk: <span className="text-text-primary font-medium">{new Date(batch.tanggal_masuk).toLocaleDateString('id-ID')}</span></p>
-                <p>Exp: <span className="text-text-primary font-medium">{new Date(batch.tanggal_expired).toLocaleDateString('id-ID')}</span></p>
-                {batch.asal_petani && <p className="col-span-2">Petani: <span className="text-text-primary font-medium">{batch.asal_petani}</span></p>}
-              </div>
-
-              <div className="flex justify-end pt-2 border-t border-border mt-1">
-                <button
-                  onClick={() => {
-                    if(confirm('Yakin ingin menghapus batch ini?')) deleteMutation.mutate(batch.id)
-                  }}
-                  disabled={deleteMutation.isPending}
-                  className="text-danger hover:bg-danger/10 p-1.5 rounded-md transition-colors"
-                  title="Hapus (Soft Delete)"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+      {/* Main Content Area */}
+      <div className="px-5 -mt-8 relative z-20">
+        {isLoading ? (
+          <div className="bg-white p-8 rounded-3xl border border-[#EFECE6] text-center shadow-md animate-pulse">
+            <p style={{ color: '#8A7968' }} className="text-sm font-medium">Memuat catatan batch...</p>
+          </div>
+        ) : batches?.length === 0 ? (
+          <div
+            className="p-8 rounded-3xl flex flex-col items-center justify-center text-center shadow-md border"
+            style={{ backgroundColor: '#FFFFFF', borderColor: '#EFECE6' }}
+          >
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-[#FAF7F2]">
+              <AlertCircle className="w-8 h-8 text-neutral-400" />
             </div>
-          ))}
-        </div>
-      )}
+            <h3 className="text-lg font-serif font-bold mb-1" style={{ color: '#4A2C2A' }}>
+              Belum Ada Batch
+            </h3>
+            <p className="text-xs max-w-[260px] leading-relaxed mb-4" style={{ color: '#8A7968' }}>
+              Belum ada batch biji kakao terdaftar. Tekan tombol 'Tambah Batch' di atas untuk memulai.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {batches?.map((batch, index) => {
+              const progressPercent = Math.max(0, Math.min(100, (Number(batch.jumlah_sisa) / Number(batch.jumlah_masuk)) * 100))
+              
+              return (
+                <div
+                  key={batch.id}
+                  className="animate-fade-in-up p-5 rounded-3xl flex flex-col gap-4 relative overflow-hidden transition-all duration-300 hover:shadow-md hover:scale-[1.01]"
+                  style={{ 
+                    backgroundColor: '#FFFFFF', 
+                    border: '1px solid #EFECE6',
+                    animationDelay: `${index * 50}ms`
+                  }}
+                >
+                  {/* Jenis Coklat Side Indicator */}
+                  <div
+                    className="absolute left-0 top-0 bottom-0 w-1.5"
+                    style={{ backgroundColor: batch.jenis_coklat === 'Fermentasi' ? '#4A2C2A' : '#3B5D3A' }}
+                  ></div>
+
+                  {/* Header: Batch Name + Stock */}
+                  <div className="flex justify-between items-start pb-3 pl-2" style={{ borderBottom: '1px solid #FAF7F2' }}>
+                    <div>
+                      <h3 className="font-extrabold text-base" style={{ color: '#2E2015' }}>
+                        {batch.kode_batch}
+                      </h3>
+                      <span
+                        className="inline-block px-2.5 py-0.5 text-[9px] font-extrabold tracking-wider uppercase rounded-full mt-1.5"
+                        style={
+                          batch.jenis_coklat === 'Fermentasi'
+                            ? { backgroundColor: 'rgba(74,44,42,0.08)', color: '#4A2C2A' }
+                            : { backgroundColor: 'rgba(59,93,58,0.08)', color: '#3B5D3A' }
+                        }
+                      >
+                        {batch.jenis_coklat}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] font-bold uppercase tracking-wider block text-neutral-400">Sisa Stok</span>
+                      <p className="text-xl font-serif font-black" style={{ color: '#4A2C2A' }}>
+                        {batch.jumlah_sisa} <span className="text-xs font-sans font-normal ml-0.5 text-neutral-500">Kg</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Stock Progress Bar (UX visual indicator) */}
+                  <div className="pl-2 space-y-1">
+                    <div className="flex justify-between text-[9px] font-bold uppercase text-neutral-400">
+                      <span>Kapasitas Tersisa</span>
+                      <span>{Math.round(progressPercent)}% ({batch.jumlah_sisa} / {batch.jumlah_masuk} Kg)</span>
+                    </div>
+                    <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ 
+                          width: `${progressPercent}%`,
+                          backgroundColor: batch.jenis_coklat === 'Fermentasi' ? '#4A2C2A' : '#3B5D3A'
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Inventory Details Grid */}
+                  <div className="grid grid-cols-2 gap-3 text-xs pl-2 text-neutral-500">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      <span>Masuk: <strong style={{ color: '#2E2015' }}>{new Date(batch.tanggal_masuk).toLocaleDateString('id-ID')}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      <span>Exp: <strong style={{ color: '#2E2015' }}>{new Date(batch.tanggal_expired).toLocaleDateString('id-ID')}</strong></span>
+                    </div>
+                    {batch.asal_petani && (
+                      <div className="col-span-2 flex items-center gap-1.5 border-t border-[#FAF7F2] pt-2">
+                        <User className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                        <span>Petani: <strong style={{ color: '#2E2015' }}>{batch.asal_petani}</strong></span>
+                      </div>
+                    )}
+                    {batch.catatan && (
+                      <div className="col-span-2 flex items-start gap-1.5 bg-[#FAF7F2] p-2.5 rounded-2xl border border-neutral-100 italic text-[11px] leading-relaxed">
+                        <FileText className="w-3.5 h-3.5 text-[#D4A373] shrink-0 mt-0.5" />
+                        <p style={{ color: '#5E4E42' }}>"{batch.catatan}"</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions Bar */}
+                  <div className="flex justify-end pt-3 border-t border-[#FAF7F2] mt-1 pl-2">
+                    <button
+                      onClick={() => {
+                        if (confirm('Yakin ingin menghapus batch ini secara permanen?')) deleteMutation.mutate(batch.id)
+                      }}
+                      disabled={deleteMutation.isPending}
+                      className="flex items-center gap-1 text-[10px] font-bold text-red-500/80 hover:text-red-600 hover:bg-red-500/5 px-2.5 py-1.5 rounded-xl border border-transparent hover:border-red-500/10 transition-all cursor-pointer"
+                      title="Hapus (Soft Delete)"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>HAPUS BATCH</span>
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Modal Tambah Batch */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-surface w-full max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-4 border-b border-border flex justify-between items-center bg-background/50">
-              <h2 className="font-bold text-primary">Tambah Stok Masuk</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-text-muted hover:text-danger">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div 
+            className="w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-in-up border"
+            style={{ backgroundColor: '#FFFFFF', borderColor: '#EFECE6' }}
+          >
+            {/* Modal Header */}
+            <div className="p-5 border-b border-[#EFECE6] flex justify-between items-center bg-[#FAF7F2]">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#D4A373]" />
+                <h2 className="font-bold text-[#4A2C2A] text-lg font-serif">Tambah Stok Masuk</h2>
+              </div>
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="text-neutral-400 hover:text-red-500 hover:bg-neutral-100 p-1.5 rounded-full transition-all cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
             
-            <div className="p-4 overflow-y-auto">
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-4">
               {addMutation.isError && (
-                <div className="mb-4 p-2 bg-danger/10 text-danger text-xs rounded-lg border border-danger/20">
-                  {addMutation.error?.message || 'Gagal menyimpan data.'}
+                <div className="p-3 bg-red-500/6 border border-red-500/15 text-red-600 text-xs font-semibold rounded-2xl flex gap-2">
+                  <span>⚠️</span>
+                  <p>{addMutation.error?.message || 'Gagal menyimpan data.'}</p>
                 </div>
               )}
+              
               <form id="add-batch-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-text-primary mb-1">Kode Batch</label>
-                  <input {...register('kode_batch')} className="w-full text-sm px-3 py-2 rounded-lg border border-border focus:ring-1 focus:ring-primary outline-none" placeholder="Contoh: BATCH-001" />
-                  {errors.kode_batch && <p className="text-danger text-[10px] mt-1">{errors.kode_batch.message}</p>}
+                {/* Kode Batch */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-[#2E2015] tracking-wide">Kode Batch</label>
+                  <input 
+                    {...register('kode_batch')} 
+                    className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
+                    style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
+                    onFocus={(e) => { e.target.style.borderColor = '#4A2C2A'; e.target.style.boxShadow = '0 0 0 3px rgba(74, 44, 42, 0.08)' }}
+                    onBlur={(e) => { e.target.style.borderColor = '#EFECE6'; e.target.style.boxShadow = 'none' }}
+                    placeholder="Contoh: BATCH-001" 
+                  />
+                  {errors.kode_batch && <p className="text-red-600 text-[10px] font-semibold mt-1 pl-1">{errors.kode_batch.message}</p>}
                 </div>
                 
-                <div>
-                  <label className="block text-xs font-medium text-text-primary mb-1">Jenis Coklat</label>
-                  <select {...register('jenis_coklat')} className="w-full text-sm px-3 py-2 rounded-lg border border-border focus:ring-1 focus:ring-primary outline-none bg-white">
+                {/* Jenis Coklat */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-[#2E2015] tracking-wide">Jenis Coklat</label>
+                  <select 
+                    {...register('jenis_coklat')} 
+                    className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none bg-[#FAF7F2]"
+                    style={{ borderColor: '#EFECE6' }}
+                    onFocus={(e) => { e.target.style.borderColor = '#4A2C2A'; e.target.style.boxShadow = '0 0 0 3px rgba(74, 44, 42, 0.08)' }}
+                    onBlur={(e) => { e.target.style.borderColor = '#EFECE6'; e.target.style.boxShadow = 'none' }}
+                  >
                     <option value="Fermentasi">Fermentasi</option>
-                    <option value="Non-Fermentasi">Non-Fermentasi</option>
+                    <option value="Non-Fermentasi">Non-Fermentasi (Biji Mentah)</option>
                   </select>
                 </div>
                 
-                <div>
-                  <label className="block text-xs font-medium text-text-primary mb-1">Jumlah Masuk (Kg)</label>
-                  <input type="number" step="0.1" {...register('jumlah_masuk', { valueAsNumber: true })} className="w-full text-sm px-3 py-2 rounded-lg border border-border focus:ring-1 focus:ring-primary outline-none" placeholder="0" />
-                  {errors.jumlah_masuk && <p className="text-danger text-[10px] mt-1">{errors.jumlah_masuk.message}</p>}
+                {/* Jumlah Masuk */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-[#2E2015] tracking-wide">Jumlah Masuk (Kg)</label>
+                  <input 
+                    type="number" 
+                    step="0.1" 
+                    {...register('jumlah_masuk', { valueAsNumber: true })} 
+                    className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
+                    style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
+                    onFocus={(e) => { e.target.style.borderColor = '#4A2C2A'; e.target.style.boxShadow = '0 0 0 3px rgba(74, 44, 42, 0.08)' }}
+                    onBlur={(e) => { e.target.style.borderColor = '#EFECE6'; e.target.style.boxShadow = 'none' }}
+                    placeholder="0" 
+                  />
+                  {errors.jumlah_masuk && <p className="text-red-600 text-[10px] font-semibold mt-1 pl-1">{errors.jumlah_masuk.message}</p>}
                 </div>
                 
+                {/* Dates */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-text-primary mb-1">Tgl Masuk</label>
-                    <input type="date" {...register('tanggal_masuk')} onChange={handleTanggalMasukChange} className="w-full text-sm px-3 py-2 rounded-lg border border-border focus:ring-1 focus:ring-primary outline-none" />
-                    {errors.tanggal_masuk && <p className="text-danger text-[10px] mt-1">{errors.tanggal_masuk.message}</p>}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-[#2E2015] tracking-wide">Tgl Masuk</label>
+                    <input 
+                      type="date" 
+                      {...register('tanggal_masuk')} 
+                      onChange={handleTanggalMasukChange} 
+                      className="w-full text-sm px-3 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
+                      style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
+                      onFocus={(e) => { e.target.style.borderColor = '#4A2C2A'; e.target.style.boxShadow = '0 0 0 3px rgba(74, 44, 42, 0.08)' }}
+                      onBlur={(e) => { e.target.style.borderColor = '#EFECE6'; e.target.style.boxShadow = 'none' }}
+                    />
+                    {errors.tanggal_masuk && <p className="text-red-600 text-[10px] font-semibold mt-1 pl-1">{errors.tanggal_masuk.message}</p>}
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-text-primary mb-1">Tgl Expired</label>
-                    <input type="date" {...register('tanggal_expired')} className="w-full text-sm px-3 py-2 rounded-lg border border-border focus:ring-1 focus:ring-primary outline-none" />
-                    {errors.tanggal_expired && <p className="text-danger text-[10px] mt-1">{errors.tanggal_expired.message}</p>}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-[#2E2015] tracking-wide">Tgl Expired</label>
+                    <input 
+                      type="date" 
+                      {...register('tanggal_expired')} 
+                      className="w-full text-sm px-3 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
+                      style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
+                      onFocus={(e) => { e.target.style.borderColor = '#4A2C2A'; e.target.style.boxShadow = '0 0 0 3px rgba(74, 44, 42, 0.08)' }}
+                      onBlur={(e) => { e.target.style.borderColor = '#EFECE6'; e.target.style.boxShadow = 'none' }}
+                    />
+                    {errors.tanggal_expired && <p className="text-red-600 text-[10px] font-semibold mt-1 pl-1">{errors.tanggal_expired.message}</p>}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-text-primary mb-1">Asal Petani (Opsional)</label>
-                  <input {...register('asal_petani')} className="w-full text-sm px-3 py-2 rounded-lg border border-border focus:ring-1 focus:ring-primary outline-none" placeholder="Nama petani/daerah" />
+                {/* Asal Petani */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-[#2E2015] tracking-wide">Asal Petani (Opsional)</label>
+                  <input 
+                    {...register('asal_petani')} 
+                    className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
+                    style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
+                    onFocus={(e) => { e.target.style.borderColor = '#4A2C2A'; e.target.style.boxShadow = '0 0 0 3px rgba(74, 44, 42, 0.08)' }}
+                    onBlur={(e) => { e.target.style.borderColor = '#EFECE6'; e.target.style.boxShadow = 'none' }}
+                    placeholder="Nama petani/daerah asal" 
+                  />
                 </div>
                 
-                <div>
-                  <label className="block text-xs font-medium text-text-primary mb-1">Catatan (Opsional)</label>
-                  <textarea {...register('catatan')} className="w-full text-sm px-3 py-2 rounded-lg border border-border focus:ring-1 focus:ring-primary outline-none" rows={2} placeholder="Kondisi dll"></textarea>
+                {/* Catatan */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-[#2E2015] tracking-wide">Catatan (Opsional)</label>
+                  <textarea 
+                    {...register('catatan')} 
+                    className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
+                    style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
+                    onFocus={(e) => { e.target.style.borderColor = '#4A2C2A'; e.target.style.boxShadow = '0 0 0 3px rgba(74, 44, 42, 0.08)' }}
+                    onBlur={(e) => { e.target.style.borderColor = '#EFECE6'; e.target.style.boxShadow = 'none' }}
+                    rows={2} 
+                    placeholder="Kondisi pengiriman, kadar air, dll"
+                  ></textarea>
                 </div>
               </form>
             </div>
             
-            <div className="p-4 border-t border-border bg-background/50 flex justify-end gap-2 mt-auto">
+            {/* Modal Footer */}
+            <div className="p-5 border-t border-[#EFECE6] bg-[#FAF7F2] flex justify-end gap-3 mt-auto">
               <button 
                 onClick={() => setIsModalOpen(false)}
                 type="button" 
-                className="px-4 py-2 text-sm font-medium text-text-muted hover:text-text-primary transition-colors"
+                className="px-5 py-2.5 text-xs font-bold text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-2xl transition-all cursor-pointer"
               >
                 Batal
               </button>
@@ -238,7 +414,13 @@ export function AdminBatchesPage() {
                 form="add-batch-form"
                 type="submit" 
                 disabled={isSubmitting || addMutation.isPending}
-                className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-70"
+                className="px-6 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white rounded-2xl transition-all duration-300 shadow-md cursor-pointer hover:scale-[1.01]"
+                style={{ 
+                  backgroundColor: '#4A2C2A',
+                  boxShadow: '0 4px 12px rgba(74, 44, 42, 0.15)'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#6F4E37'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4A2C2A'}
               >
                 {isSubmitting || addMutation.isPending ? 'Menyimpan...' : 'Simpan Stok'}
               </button>
