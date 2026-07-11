@@ -8,7 +8,7 @@ import { PackageMinus, CheckCircle2 } from 'lucide-react'
 
 const stockOutSchema = z.object({
   p_jenis_coklat: z.enum(['Fermentasi', 'Non-Fermentasi']),
-  p_jumlah_dibutuhkan: z.number({ invalid_type_error: 'Jumlah harus berupa angka' }).min(0.1, 'Jumlah minimal 0.1 Kg'),
+  p_jumlah_dibutuhkan: z.number().min(0.1, 'Jumlah minimal 0.1 Kg'),
   p_tanggal_keluar: z.string().min(1, 'Tanggal keluar wajib diisi'),
   p_keterangan: z.string().optional(),
 })

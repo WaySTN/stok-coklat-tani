@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 const batchSchema = z.object({
   kode_batch: z.string().min(1, 'Kode batch wajib diisi'),
   jenis_coklat: z.enum(['Fermentasi', 'Non-Fermentasi']),
-  jumlah_masuk: z.number({ invalid_type_error: 'Jumlah harus berupa angka' }).min(0.1, 'Jumlah minimal 0.1 Kg'),
+  jumlah_masuk: z.number().min(0.1, 'Jumlah minimal 0.1 Kg'),
   tanggal_masuk: z.string().min(1, 'Tanggal masuk wajib diisi'),
   tanggal_expired: z.string().min(1, 'Tanggal expired wajib diisi'),
   asal_petani: z.string().optional(),
