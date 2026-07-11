@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { Home, PackagePlus, PackageMinus, History } from 'lucide-react'
+import { Home, PackagePlus, PackageMinus, History, Boxes } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 
 const BRAND = '#4A2C2A'
@@ -12,6 +12,7 @@ export function BottomNav() {
 
   const publicLinks = [
     { to: '/', icon: Home, label: 'Beranda', exact: true },
+    { to: '/stok', icon: Boxes, label: 'Stok', exact: false },
     { to: '/riwayat', icon: History, label: 'Riwayat', exact: false },
   ]
 

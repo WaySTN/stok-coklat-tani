@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { AppShell } from './components/layout/AppShell'
@@ -13,6 +13,7 @@ import { AdminHistoryPage } from './routes/admin/HistoryPage'
 
 // Public Pages
 import { PublicDashboardPage } from './routes/public/DashboardPage'
+import { PublicStockDetailPage } from './routes/public/StockDetailPage'
 import { PublicHistoryPage } from './routes/public/HistoryPage'
 
 const queryClient = new QueryClient()
@@ -30,6 +31,7 @@ function App() {
             
             {/* Rute Publik (Read Only, Tanpa Login) */}
             <Route path="/" element={<PublicDashboardPage />} />
+            <Route path="/stok" element={<PublicStockDetailPage />} />
             <Route path="/riwayat" element={<PublicHistoryPage />} />
             
             {/* Rute Admin yang diproteksi Auth Guard */}
@@ -40,6 +42,8 @@ function App() {
               <Route path="history" element={<AdminHistoryPage />} />
             </Route>
             
+            {/* Catch-all route to redirect back to public home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>
