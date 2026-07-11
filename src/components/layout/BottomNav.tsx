@@ -1,46 +1,68 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { Home, PackagePlus, PackageMinus, History } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 
+const BRAND = '#4A2C2A'
+const MUTED = '#8A7968'
+
 export function BottomNav() {
   const { session } = useAuth()
-  const isAdmin = !!session
+  const location = useLocation()
+  const isAdminArea = location.pathname.startsWith('/admin')
 
-  // Definisi menu berdasarkan role
-  type Menu = { name: string; path: string; icon: any; end?: boolean }
-  
-  const adminMenus: Menu[] = [
-    { name: 'Dashboard', path: '/admin', icon: Home, end: true },
-    { name: 'Stok Masuk', path: '/admin/batches', icon: PackagePlus },
-    { name: 'Stok Keluar', path: '/admin/stock-out', icon: PackageMinus },
-    { name: 'Riwayat', path: '/admin/history', icon: History },
+  const publicLinks = [
+    { to: '/', icon: Home, label: 'Beranda', exact: true },
+    { to: '/riwayat', icon: History, label: 'Riwayat', exact: false },
   ]
 
-  const userMenus: Menu[] = [
-    { name: 'Dashboard', path: '/', icon: Home, end: true },
-    { name: 'Riwayat', path: '/riwayat', icon: History },
+  const adminLinks = [
+    { to: '/admin', icon: Home, label: 'Dashboard', exact: true },
+    { to: '/admin/batches', icon: PackagePlus, label: 'Stok Masuk', exact: false },
+    { to: '/admin/stock-out', icon: PackageMinus, label: 'Stok Keluar', exact: false },
+    { to: '/admin/history', icon: History, label: 'Riwayat', exact: false },
   ]
 
-  const menus = isAdmin ? adminMenus : userMenus
+  const links = isAdminArea ? adminLinks : publicLinks
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-border shadow-[0_-2px_10px_rgba(0,0,0,0.05)] pb-[env(safe-area-inset-bottom)]">
-      <div className="max-w-md mx-auto flex h-16">
-        {menus.map((menu) => (
-          <NavLink
-            key={menu.path}
-            to={menu.path}
-            end={menu.end}
-            className={({ isActive }) =>
-              `flex-1 flex flex-col items-center justify-center space-y-1 transition-colors ${
-                isActive ? 'text-primary font-medium' : 'text-text-muted hover:text-primary/70'
-              }`
-            }
-          >
-            <menu.icon className="w-6 h-6" />
-            <span className="text-[10px] sm:text-xs">{menu.name}</span>
-          </NavLink>
-        ))}
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50"
+      style={{
+        backgroundColor: '#FFFFFF',
+        borderTop: '1px solid rgba(229,231,235,0.6)',
+        boxShadow: '0 -4px 20px rgba(74,44,42,0.06)',
+      }}
+    >
+      <div className="flex justify-around items-center h-16 max-w-md mx-auto px-2">
+        {links.map((link) => {
+          const Icon = link.icon
+          const isActive = link.exact
+            ? location.pathname === link.to
+            : location.pathname.startsWith(link.to)
+
+          return (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              className="flex flex-col items-center justify-center w-full h-full space-y-1 transition-all"
+              style={{ color: isActive ? BRAND : MUTED }}
+            >
+              <div
+                className="flex items-center justify-center w-12 h-8 rounded-full transition-colors"
+                style={{ backgroundColor: isActive ? 'rgba(74,44,42,0.1)' : 'transparent' }}
+              >
+                <Icon
+                  className="w-5 h-5 transition-transform"
+                  style={{ transform: isActive ? 'scale(1.1)' : 'scale(1)' }}
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
+              </div>
+              <span className="text-[10px]" style={{ fontWeight: isActive ? 700 : 500 }}>
+                {link.label}
+              </span>
+            </NavLink>
+          )
+        })}
       </div>
     </nav>
   )
