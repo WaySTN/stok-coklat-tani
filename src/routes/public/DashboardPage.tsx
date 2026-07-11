@@ -18,7 +18,7 @@ export function PublicDashboardPage() {
         <div className="absolute -top-16 -right-16 pointer-events-none animate-float opacity-[0.03]">
           <Warehouse className="w-64 h-64 text-white" />
         </div>
-        
+
         <div className="absolute top-20 -left-10 w-40 h-40 rounded-full blur-3xl pointer-events-none opacity-[0.06]" style={{ background: '#3B5D3A' }}></div>
 
         <div className="relative z-10 flex flex-col gap-1">
@@ -31,10 +31,10 @@ export function PublicDashboardPage() {
             </span>
           </div>
           <h1 className="text-3xl font-serif font-black tracking-tight text-white mt-1">
-            Gudang Kakao
+            Gudang Coklat
           </h1>
           <p className="text-xs font-medium text-white/60 tracking-wide mt-0.5">
-            Sistem Informasi & Pemantauan Stok Tani
+            Sistem Informasi & Pemantauan Stok Coklat Kelompok Tani Mulyojati
           </p>
         </div>
       </div>
@@ -49,8 +49,8 @@ export function PublicDashboardPage() {
         {/* Main Info Card - Glassmorphism style */}
         <div
           className="animate-fade-in-up delay-300 p-6 rounded-3xl flex flex-col gap-4 border transition-all duration-300 hover:shadow-md"
-          style={{ 
-            backgroundColor: '#FFFFFF', 
+          style={{
+            backgroundColor: '#FFFFFF',
             borderColor: '#EFECE6',
             boxShadow: '0 4px 20px rgba(74, 44, 42, 0.02)'
           }}
@@ -71,7 +71,7 @@ export function PublicDashboardPage() {
               </p>
             </div>
           </div>
-          
+
           <p className="text-xs leading-relaxed" style={{ color: '#5E4E42' }}>
             Seluruh data tonase yang ditampilkan bersumber langsung dari pencatatan log masuk dan log keluar digital tim administrasi di timbangan gudang secara <strong style={{ color: '#3B5D3A' }}>real-time</strong>.
           </p>
@@ -79,7 +79,7 @@ export function PublicDashboardPage() {
 
         {/* Dynamic badges row */}
         <div className="grid grid-cols-2 gap-3 animate-fade-in-up delay-300">
-          <div 
+          <div
             className="p-4 rounded-2xl border flex items-center gap-2.5"
             style={{ backgroundColor: '#FFFFFF', borderColor: '#EFECE6' }}
           >
@@ -89,7 +89,7 @@ export function PublicDashboardPage() {
             </span>
           </div>
 
-          <div 
+          <div
             className="p-4 rounded-2xl border flex items-center gap-2.5"
             style={{ backgroundColor: '#FFFFFF', borderColor: '#EFECE6' }}
           >
