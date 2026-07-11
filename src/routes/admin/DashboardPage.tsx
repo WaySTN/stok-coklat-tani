@@ -1,15 +1,16 @@
+import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { StockSummary } from '../../components/StockSummary'
-import { LogOut, PackagePlus, PackageMinus, History, BookOpen, ChevronRight, User } from 'lucide-react'
+import { LogOut, PackagePlus, PackageMinus, History, BookOpen, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { ConfirmModal } from '../../components/ConfirmModal'
 
 export function AdminDashboardPage() {
   const navigate = useNavigate()
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const handleLogout = async () => {
-    if (confirm('Yakin ingin keluar dari sistem?')) {
-      await supabase.auth.signOut()
-    }
+    await supabase.auth.signOut()
   }
 
   return (
@@ -43,7 +44,7 @@ export function AdminDashboardPage() {
           </div>
 
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl transition-all duration-300 backdrop-blur-md shadow-md cursor-pointer border border-white/10 hover:bg-red-500/10 hover:border-red-500/20 text-white/95 text-xs font-bold"
             style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
           >
@@ -130,6 +131,18 @@ export function AdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Custom Reusable Confirm Modal */}
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+        title="Keluar dari Sistem?"
+        message="Anda perlu memasukkan email & kata sandi kembali untuk mengelola stok gudang."
+        type="danger"
+        confirmText="Ya, Keluar"
+        cancelText="Batal"
+      />
     </div>
   )
 }

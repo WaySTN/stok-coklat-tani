@@ -5,6 +5,7 @@ import { Plus, Trash2, X, Calendar, User, Tag, Sparkles, AlertCircle, FileText }
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ConfirmModal } from '../../components/ConfirmModal'
 
 const batchSchema = z.object({
   kode_batch: z.string().min(1, 'Kode batch wajib diisi'),
@@ -21,12 +22,15 @@ type BatchForm = z.infer<typeof batchSchema>
 export function AdminBatchesPage() {
   const queryClient = useQueryClient()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+  const [successAlertMsg, setSuccessAlertMsg] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<BatchForm>({
     resolver: zodResolver(batchSchema),
@@ -34,6 +38,9 @@ export function AdminBatchesPage() {
       jenis_coklat: 'Fermentasi',
     }
   })
+
+  // Watch jenis_coklat for segmented control UI
+  const watchJenisCoklat = watch('jenis_coklat')
 
   // Fetch Data Batches Aktif
   const { data: batches, isLoading } = useQuery({
@@ -62,10 +69,11 @@ export function AdminBatchesPage() {
         throw new Error(error.message)
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['batches'] })
       setIsModalOpen(false)
       reset()
+      setSuccessAlertMsg(`Batch ${variables.kode_batch} berhasil ditambahkan ke stok masuk!`)
     },
   })
 
@@ -80,21 +88,12 @@ export function AdminBatchesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['batches'] })
+      setSuccessAlertMsg('Batch berhasil dihapus dari stok aktif.')
     },
   })
 
   const onSubmit = (data: BatchForm) => {
     addMutation.mutate(data)
-  }
-
-  // Set Expired 1 Tahun Otomatis
-  const handleTanggalMasukChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value
-    if (val) {
-      const date = new Date(val)
-      date.setFullYear(date.getFullYear() + 1)
-      setValue('tanggal_expired', date.toISOString().split('T')[0])
-    }
   }
 
   return (
@@ -249,9 +248,7 @@ export function AdminBatchesPage() {
                   {/* Actions Bar */}
                   <div className="flex justify-end pt-3 border-t border-[#FAF7F2] mt-1 pl-2">
                     <button
-                      onClick={() => {
-                        if (confirm('Yakin ingin menghapus batch ini secara permanen?')) deleteMutation.mutate(batch.id)
-                      }}
+                      onClick={() => setDeleteTargetId(batch.id)}
                       disabled={deleteMutation.isPending}
                       className="flex items-center gap-1 text-[10px] font-bold text-red-500/80 hover:text-red-600 hover:bg-red-500/5 px-2.5 py-1.5 rounded-xl border border-transparent hover:border-red-500/10 transition-all cursor-pointer"
                       title="Hapus (Soft Delete)"
@@ -312,19 +309,35 @@ export function AdminBatchesPage() {
                   {errors.kode_batch && <p className="text-red-600 text-[10px] font-semibold mt-1 pl-1">{errors.kode_batch.message}</p>}
                 </div>
                 
-                {/* Jenis Coklat */}
+                {/* Jenis Coklat (Segmented Control - Premium Dropdown Replacement) */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-[#2E2015] tracking-wide">Jenis Coklat</label>
-                  <select 
-                    {...register('jenis_coklat')} 
-                    className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none bg-[#FAF7F2]"
-                    style={{ borderColor: '#EFECE6' }}
-                    onFocus={(e) => { e.target.style.borderColor = '#4A2C2A'; e.target.style.boxShadow = '0 0 0 3px rgba(74, 44, 42, 0.08)' }}
-                    onBlur={(e) => { e.target.style.borderColor = '#EFECE6'; e.target.style.boxShadow = 'none' }}
-                  >
-                    <option value="Fermentasi">Fermentasi</option>
-                    <option value="Non-Fermentasi">Non-Fermentasi (Biji Mentah)</option>
-                  </select>
+                  <div className="flex gap-2 p-1 rounded-2xl border" style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}>
+                    <button
+                      type="button"
+                      onClick={() => setValue('jenis_coklat', 'Fermentasi')}
+                      className="flex-1 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 cursor-pointer"
+                      style={{
+                        backgroundColor: watchJenisCoklat === 'Fermentasi' ? '#4A2C2A' : 'transparent',
+                        color: watchJenisCoklat === 'Fermentasi' ? '#FFFFFF' : '#8A7968',
+                        boxShadow: watchJenisCoklat === 'Fermentasi' ? '0 4px 10px rgba(74, 44, 42, 0.15)' : 'none'
+                      }}
+                    >
+                      Fermentasi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setValue('jenis_coklat', 'Non-Fermentasi')}
+                      className="flex-1 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 cursor-pointer"
+                      style={{
+                        backgroundColor: watchJenisCoklat === 'Non-Fermentasi' ? '#3B5D3A' : 'transparent',
+                        color: watchJenisCoklat === 'Non-Fermentasi' ? '#FFFFFF' : '#8A7968',
+                        boxShadow: watchJenisCoklat === 'Non-Fermentasi' ? '0 4px 10px rgba(59, 93, 58, 0.15)' : 'none'
+                      }}
+                    >
+                      Mentah / Non-Ferm
+                    </button>
+                  </div>
                 </div>
                 
                 {/* Jumlah Masuk */}
@@ -350,7 +363,6 @@ export function AdminBatchesPage() {
                     <input 
                       type="date" 
                       {...register('tanggal_masuk')} 
-                      onChange={handleTanggalMasukChange} 
                       className="w-full text-sm px-3 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
                       style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
                       onFocus={(e) => { e.target.style.borderColor = '#4A2C2A'; e.target.style.boxShadow = '0 0 0 3px rgba(74, 44, 42, 0.08)' }}
@@ -428,6 +440,29 @@ export function AdminBatchesPage() {
           </div>
         </div>
       )}
+
+      {/* Custom Reusable Confirm Modal for Deletion */}
+      <ConfirmModal
+        isOpen={deleteTargetId !== null}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={() => {
+          if (deleteTargetId) deleteMutation.mutate(deleteTargetId)
+        }}
+        title="Hapus Batch Coklat?"
+        message="Batch ini akan diarsipkan (soft delete) dan dikeluarkan dari daftar aktif. Persediaan stok sisa tidak akan dihitung kembali."
+        type="danger"
+        confirmText="Ya, Hapus"
+        cancelText="Batal"
+      />
+
+      {/* Success Alert Modal (Notification) */}
+      <ConfirmModal
+        isOpen={successAlertMsg !== null}
+        onClose={() => setSuccessAlertMsg(null)}
+        title="Berhasil!"
+        message={successAlertMsg || ''}
+        type="success"
+      />
     </div>
   )
 }

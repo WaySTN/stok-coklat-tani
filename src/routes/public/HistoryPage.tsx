@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { History as HistoryIcon, PackageOpen, Calendar, Info } from 'lucide-react'
+import { History as HistoryIcon, ChevronDown, ChevronUp, Calendar, Info, Clock, AlertCircle } from 'lucide-react'
 
 export function PublicHistoryPage() {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
   const { data: histories, isLoading } = useQuery({
     queryKey: ['public-history'],
     queryFn: async () => {
@@ -26,6 +29,10 @@ export function PublicHistoryPage() {
     },
   })
 
+  const toggleExpand = (id: string) => {
+    setExpandedId(prev => (prev === id ? null : id))
+  }
+
   return (
     <div className="pb-28 min-h-screen overflow-y-auto" style={{ backgroundColor: '#FAF7F2' }}>
       {/* Header senada dengan Dashboard */}
@@ -38,7 +45,7 @@ export function PublicHistoryPage() {
           boxShadow: '0 8px 30px rgba(0, 0, 0, 0.15)',
         }}
       >
-        <div className="absolute -top-16 -right-16 pointer-events-none animate-float opacity-[0.03]">
+        <div className="absolute -top-16 -right-16 pointer-events-none opacity-[0.03] animate-float">
           <HistoryIcon className="w-64 h-64 text-white" />
         </div>
 
@@ -60,10 +67,11 @@ export function PublicHistoryPage() {
         </div>
       </div>
 
+      {/* Main Content Area */}
       <div className="px-5 -mt-8 relative z-20">
         {isLoading ? (
           <div className="bg-white p-8 rounded-3xl border border-[#EFECE6] text-center shadow-md animate-pulse">
-            <p style={{ color: '#8A7968' }} className="text-sm font-medium">Membuka catatan riwayat...</p>
+            <p style={{ color: '#8A7968' }} className="text-sm font-medium">Memuat catatan riwayat...</p>
           </div>
         ) : !histories || histories.length === 0 ? (
           <div
@@ -74,10 +82,9 @@ export function PublicHistoryPage() {
             }}
           >
             <div
-              className="w-16 h-16 rounded-full flex items-center justify-center mb-4 animate-float"
-              style={{ backgroundColor: '#FAF7F2' }}
+              className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-[#FAF7F2]"
             >
-              <PackageOpen className="w-8 h-8" style={{ color: 'rgba(138,121,104,0.6)' }} />
+              <AlertCircle className="w-8 h-8 text-neutral-400" />
             </div>
             <h3 className="text-lg font-serif font-bold mb-1" style={{ color: '#4A2C2A' }}>
               Catatan Masih Kosong
@@ -87,81 +94,108 @@ export function PublicHistoryPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {histories.map((item: any, index: number) => (
-              <div
-                key={item.id}
-                className="animate-fade-in-up p-5 rounded-3xl flex flex-col gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md hover:scale-[1.01]"
-                style={{ 
-                  backgroundColor: '#FFFFFF', 
-                  border: '1px solid #EFECE6',
-                  animationDelay: `${index * 50}ms`
-                }}
-              >
-                {/* Indikator Sisi Kiri */}
+          <div className="space-y-2.5">
+            {histories.map((item: any, index: number) => {
+              const isExpanded = expandedId === item.id
+              
+              return (
                 <div
-                  className="absolute left-0 top-0 bottom-0 w-1.5"
-                  style={{ backgroundColor: '#B03A2E' }}
-                ></div>
+                  key={item.id}
+                  className="animate-fade-in-up rounded-2xl border transition-all duration-300 overflow-hidden shadow-sm"
+                  style={{ 
+                    backgroundColor: '#FFFFFF', 
+                    borderColor: '#EFECE6',
+                    animationDelay: `${index * 30}ms`
+                  }}
+                >
+                  {/* Collapsed Header / Row (Compact UX view) */}
+                  <div
+                    onClick={() => toggleExpand(item.id)}
+                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-neutral-50/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Red left bar indicator */}
+                      <div className="w-1 h-8 rounded-full" style={{ backgroundColor: '#B03A2E' }}></div>
+                      
+                      <div className="flex flex-col">
+                        <span className="font-extrabold text-sm" style={{ color: '#2E2015' }}>
+                          {item.batches?.kode_batch || 'Batch Dihapus'}
+                        </span>
+                        <span className="text-[10px] text-neutral-400 font-bold tracking-wide uppercase mt-0.5">
+                          {new Date(item.tanggal_keluar).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                        </span>
+                      </div>
+                    </div>
 
-                {/* Header baris atas */}
-                <div className="flex justify-between items-start pb-2.5 pl-2" style={{ borderBottom: '1px solid #FAF7F2' }}>
-                  <div>
-                    <h3 className="font-bold text-sm" style={{ color: '#2E2015' }}>
-                      {item.batches?.kode_batch || 'Batch Dihapus'}
-                    </h3>
-                    <span
-                      className="inline-block px-2.5 py-0.5 text-[9px] font-extrabold tracking-wider uppercase rounded-full mt-1.5"
-                      style={
-                        item.batches?.jenis_coklat === 'Fermentasi'
-                          ? { backgroundColor: 'rgba(74,44,42,0.08)', color: '#4A2C2A' }
-                          : { backgroundColor: 'rgba(59,93,58,0.08)', color: '#3B5D3A' }
-                      }
-                    >
-                      {item.batches?.jenis_coklat || '-'}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-serif font-black text-2xl" style={{ color: '#B03A2E' }}>
-                      - {item.jumlah_keluar}
-                    </span>
-                    <span className="text-xs font-bold ml-0.5" style={{ color: '#B03A2E' }}>Kg</span>
-                  </div>
-                </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="px-2 py-0.5 text-[8px] font-extrabold tracking-wider uppercase rounded-full"
+                        style={
+                          item.batches?.jenis_coklat === 'Fermentasi'
+                            ? { backgroundColor: 'rgba(74,44,42,0.08)', color: '#4A2C2A' }
+                            : { backgroundColor: 'rgba(59,93,58,0.08)', color: '#3B5D3A' }
+                        }
+                      >
+                        {item.batches?.jenis_coklat === 'Fermentasi' ? 'Ferm' : 'Mentah'}
+                      </span>
+                      
+                      <span className="font-serif font-black text-sm" style={{ color: '#B03A2E' }}>
+                        -{item.jumlah_keluar} <span className="text-[10px] font-sans font-medium text-neutral-500">Kg</span>
+                      </span>
 
-                {/* Informasi detail */}
-                <div className="text-xs pl-2 space-y-2" style={{ color: '#8A7968' }}>
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-neutral-400" />
-                    <span>
-                      {new Date(item.tanggal_keluar).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </span>
+                      {isExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-neutral-400" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-neutral-400" />
+                      )}
+                    </div>
                   </div>
-                  
-                  {item.keterangan && (
-                    <div
-                      className="p-3 rounded-2xl italic flex gap-2"
-                      style={{
-                        color: '#5E4E42',
-                        backgroundColor: '#FAF7F2',
-                        border: '1px solid rgba(239,236,230,0.5)',
+
+                  {/* Expanded Detail Panel */}
+                  {isExpanded && (
+                    <div 
+                      className="px-5 pb-5 pt-3 border-t text-xs text-neutral-500 space-y-3 animate-fade-in-up"
+                      style={{ 
+                        backgroundColor: '#FCFAF7',
+                        borderColor: '#F5EFE6',
+                        animationDuration: '200ms'
                       }}
                     >
-                      <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#D4A373]" />
-                      <p className="text-[11px] leading-relaxed">"{item.keterangan}"</p>
+                      {/* Date */}
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                        <span>Tanggal Keluar: <strong style={{ color: '#2E2015' }}>{new Date(item.tanggal_keluar).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></span>
+                      </div>
+
+                      {/* Created At Timestamp */}
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                        <span>Waktu Pencatatan: <strong style={{ color: '#2E2015' }}>{new Date(item.created_at).toLocaleString('id-ID')}</strong></span>
+                      </div>
+
+                      {/* Keterangan */}
+                      {item.keterangan ? (
+                        <div
+                          className="p-3 rounded-2xl italic flex gap-2 border"
+                          style={{
+                            color: '#5E4E42',
+                            backgroundColor: '#FFFFFF',
+                            borderColor: '#EFECE6'
+                          }}
+                        >
+                          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#D4A373]" />
+                          <p className="text-[11px] leading-relaxed">"{item.keterangan}"</p>
+                        </div>
+                      ) : (
+                        <div className="text-[10px] italic text-neutral-400 pl-5">
+                          Tidak ada keterangan/tujuan pengiriman.
+                        </div>
+                      )}
                     </div>
                   )}
-                  
-                  <p className="text-[10px] text-right" style={{ color: 'rgba(138,121,104,0.45)' }}>
-                    Dicatat pada {new Date(item.created_at).toLocaleString('id-ID')}
-                  </p>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
