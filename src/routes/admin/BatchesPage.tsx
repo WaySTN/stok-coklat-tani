@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { Plus, Trash2, X, Calendar, User, Tag, Sparkles, AlertCircle, FileText } from 'lucide-react'
+import { Plus, Trash2, X, Calendar, User, Sparkles, AlertCircle, FileText } from 'lucide-react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'

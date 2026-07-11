@@ -1,12 +1,10 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { Home, PackagePlus, PackageMinus, History, Boxes } from 'lucide-react'
-import { useAuth } from '../../hooks/useAuth'
 
 const BRAND = '#4A2C2A'
 const MUTED = '#8A7968'
 
 export function BottomNav() {
-  const { session } = useAuth()
   const location = useLocation()
   const isAdminArea = location.pathname.startsWith('/admin')
 

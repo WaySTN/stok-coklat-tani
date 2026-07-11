@@ -70,7 +70,7 @@ export function AdminStockOutPage() {
         p_jenis_coklat: data.p_jenis_coklat,
         p_jumlah_dibutuhkan: data.p_jumlah_dibutuhkan,
         p_tanggal_keluar: data.p_tanggal_keluar,
-        p_keterangan: data.p_keterangan || null,
+        p_keterangan: data.p_keterangan || '',
       })
 
       if (error) {

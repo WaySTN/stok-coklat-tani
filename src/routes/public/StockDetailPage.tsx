@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { Boxes, Calendar, User, FileText, Search, Sparkles } from 'lucide-react'
+import { Boxes, Calendar, User, FileText, Search } from 'lucide-react'
 
 export function PublicStockDetailPage() {
   const [filterType, setFilterType] = useState<'Semua' | 'Fermentasi' | 'Non-Fermentasi'>('Semua')
