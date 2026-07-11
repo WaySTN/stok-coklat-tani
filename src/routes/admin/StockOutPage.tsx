@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { PackageMinus, CheckCircle2, ArrowRightLeft, Sparkles, Calendar, FileText } from 'lucide-react'
+import { PackageMinus, ArrowRightLeft } from 'lucide-react'
 import { ConfirmModal } from '../../components/ConfirmModal'
 
 const stockOutSchema = z.object({
