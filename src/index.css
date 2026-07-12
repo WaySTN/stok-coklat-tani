@@ -180,22 +180,29 @@ body {
   }
 
   #printable-label .grid {
-    gap: 16px 24px !important;
+    gap: 20px 24px !important;
   }
 
-  #printable-label .grid span.text-\[8px\] {
+  /* Target Label Kolom (text-neutral-400) */
+  #printable-label .grid span.text-neutral-400 {
     font-size: 10px !important;
+    color: #8A7968 !important;
     margin-bottom: 4px !important;
     display: block !important;
+    letter-spacing: 0.05em !important;
+    white-space: normal !important;
   }
 
-  #printable-label .grid span.font-extrabold,
-  #printable-label .grid span.font-bold {
+  /* Target Nilai Kolom (Selain text-neutral-400) */
+  #printable-label .grid div > span:not(.text-neutral-400) {
     font-size: 16px !important;
+    color: #2E2015 !important;
+    font-weight: 800 !important;
     display: block !important;
-    white-space: nowrap !important;
-    text-overflow: ellipsis !important;
-    overflow: hidden !important;
+    white-space: normal !important; /* Agar melipat ke bawah jika panjang, tidak terpotong */
+    overflow: visible !important;
+    text-overflow: unset !important;
+    line-height: 1.3 !important;
   }
 
   #printable-label div.text-\[9px\] {
