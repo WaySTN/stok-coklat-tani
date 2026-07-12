@@ -124,12 +124,27 @@ body {
     display: none !important;
   }
   
-  #printable-label-root {
-    display: block !important;
-    position: static !important;
-    background: transparent !important;
-    padding: 0 !important;
+  html, body {
+    height: 100vh !important;
+    width: 100vw !important;
     margin: 0 !important;
+    padding: 0 !important;
+    background-color: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  #printable-label-root {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    background: transparent !important;
   }
 
   /* Sembunyikan elemen UI preview modal saat cetak */
@@ -138,14 +153,56 @@ body {
   }
 
   #printable-label {
-    border: 2px dashed #4A2C2A !important;
-    border-radius: 12px !important;
-    padding: 24px !important;
-    width: 320px !important;
-    margin: 50px auto !important;
+    border: 3px dashed #4A2C2A !important;
+    border-radius: 24px !important;
+    padding: 36px !important;
+    width: 480px !important;
     background-color: #ffffff !important;
     box-shadow: none !important;
     display: flex !important;
     flex-direction: column !important;
+    gap: 20px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Skalakan ukuran teks agar lebih besar dan mudah dibaca pada kertas label fisik */
+  #printable-label div.text-center > span {
+    font-size: 11px !important;
+    letter-spacing: 0.15em !important;
+    display: block !important;
+  }
+
+  #printable-label h4 {
+    font-size: 32px !important;
+    margin-top: 8px !important;
+    margin-bottom: 8px !important;
+    line-height: 1.2 !important;
+  }
+
+  #printable-label .grid {
+    gap: 16px 24px !important;
+  }
+
+  #printable-label .grid span.text-\[8px\] {
+    font-size: 10px !important;
+    margin-bottom: 4px !important;
+    display: block !important;
+  }
+
+  #printable-label .grid span.font-extrabold,
+  #printable-label .grid span.font-bold {
+    font-size: 16px !important;
+    display: block !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+  }
+
+  #printable-label div.text-\[9px\] {
+    font-size: 11px !important;
+    padding: 12px 16px !important;
+    margin-top: 10px !important;
+    line-height: 1.6 !important;
+    border-radius: 12px !important;
   }
 }
