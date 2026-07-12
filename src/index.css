@@ -119,32 +119,32 @@ body {
 
 /* Print Media Styles */
 @media print {
+  @page {
+    margin: 0 !important;
+  }
+
   /* Sembunyikan seluruh container utama selain portal cetak */
   body > *:not(#printable-label-root) {
     display: none !important;
   }
   
   html, body {
-    height: 100vh !important;
-    width: 100vw !important;
+    height: auto !important;
+    min-height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     background-color: #ffffff !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    overflow: hidden !important;
   }
 
   #printable-label-root {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    display: block !important;
     width: 100% !important;
-    height: 100% !important;
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+    height: auto !important;
+    position: static !important;
     background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   /* Sembunyikan elemen UI preview modal saat cetak */
@@ -156,13 +156,15 @@ body {
     border: 3px dashed #4A2C2A !important;
     border-radius: 24px !important;
     padding: 36px !important;
-    width: 480px !important;
+    width: 440px !important; /* Ukuran pas untuk print mobile dan desktop */
     background-color: #ffffff !important;
     box-shadow: none !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 20px !important;
     box-sizing: border-box !important;
+    margin: 50px auto !important; /* Margin auto menyejajarkan secara vertikal dan horizontal */
+    page-break-inside: avoid !important;
   }
 
   /* Skalakan ukuran teks agar lebih besar dan mudah dibaca pada kertas label fisik */
