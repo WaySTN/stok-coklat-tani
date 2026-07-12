@@ -202,6 +202,7 @@ export function AdminStockOutPage() {
                   type="number" 
                   step="0.1" 
                   {...register('p_jumlah_dibutuhkan', { valueAsNumber: true })} 
+                  onWheel={(e) => e.currentTarget.blur()}
                   className="w-full text-sm pl-4 pr-12 py-3 rounded-2xl border transition-all duration-300 outline-none" 
                   style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
                   onFocus={(e) => { e.target.style.borderColor = '#4A2C2A'; e.target.style.boxShadow = '0 0 0 3px rgba(74, 44, 42, 0.08)' }}

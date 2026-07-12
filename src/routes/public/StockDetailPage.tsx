@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { Boxes, Calendar, User, FileText, Search } from 'lucide-react'
+import { Boxes, Calendar, User, FileText, Search, MapPin } from 'lucide-react'
+import { getFermentationStatus } from '../admin/BatchesPage'
 
 export function PublicStockDetailPage() {
   const [filterType, setFilterType] = useState<'Semua' | 'Fermentasi' | 'Non-Fermentasi'>('Semua')
@@ -133,6 +134,7 @@ export function PublicStockDetailPage() {
           <div className="space-y-4">
             {filteredBatches?.map((batch, index) => {
               const progressPercent = Math.max(0, Math.min(100, (Number(batch.jumlah_sisa) / Number(batch.jumlah_masuk)) * 100))
+              const fermStatus = getFermentationStatus(batch.tanggal_masuk, batch.jenis_coklat)
               
               return (
                 <div
@@ -174,6 +176,29 @@ export function PublicStockDetailPage() {
                     </div>
                   </div>
 
+                  {/* Fermentation Progress (If Fermentasi) */}
+                  {fermStatus && (
+                    <div 
+                      className="pl-2 pr-3 py-2.5 rounded-2xl border text-[11px] font-bold flex flex-col gap-2"
+                      style={{ 
+                        borderColor: `${fermStatus.color}20`, 
+                        backgroundColor: fermStatus.bgColor,
+                        color: fermStatus.color
+                      }}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span>{fermStatus.text}</span>
+                        <span>{fermStatus.percent}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-neutral-200/40 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full rounded-full transition-all duration-300 animate-pulse" 
+                          style={{ width: `${fermStatus.percent}%`, backgroundColor: fermStatus.color }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Stock Progress Line */}
                   <div className="pl-2 space-y-1">
                     <div className="flex justify-between text-[9px] font-bold uppercase text-neutral-400">
@@ -201,12 +226,14 @@ export function PublicStockDetailPage() {
                       <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                       <span>ED (Expired): <strong style={{ color: '#2E2015' }}>{new Date(batch.tanggal_expired).toLocaleDateString('id-ID')}</strong></span>
                     </div>
-                    {batch.asal_petani && (
-                      <div className="col-span-2 flex items-center gap-1.5 border-t border-[#FAF7F2] pt-2">
-                        <User className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                        <span>Petani: <strong style={{ color: '#2E2015' }}>{batch.asal_petani}</strong></span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      <span>Rak Gudang: <strong style={{ color: '#2E2015' }}>{batch.lokasi_rak || '-'}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      <span>Anggota Tani: <strong style={{ color: '#2E2015' }}>{batch.asal_petani}</strong></span>
+                    </div>
                     {batch.catatan && (
                       <div className="col-span-2 flex items-start gap-1.5 bg-[#FAF7F2] p-2.5 rounded-2xl border border-neutral-100 italic text-[11px] leading-relaxed">
                         <FileText className="w-3.5 h-3.5 text-[#D4A373] shrink-0 mt-0.5" />

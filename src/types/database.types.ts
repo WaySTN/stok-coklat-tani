@@ -29,6 +29,7 @@ export type Database = {
           tanggal_expired: string
           tanggal_masuk: string
           updated_at: string
+          lokasi_rak: string | null
         }
         Insert: {
           asal_petani?: string | null
@@ -44,6 +45,7 @@ export type Database = {
           tanggal_expired: string
           tanggal_masuk: string
           updated_at?: string
+          lokasi_rak?: string | null
         }
         Update: {
           asal_petani?: string | null
@@ -59,6 +61,61 @@ export type Database = {
           tanggal_expired?: string
           tanggal_masuk?: string
           updated_at?: string
+          lokasi_rak?: string | null
+        }
+        Relationships: []
+      }
+      farmers: {
+        Row: {
+          id: string
+          nama: string
+          no_hp: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          nama: string
+          no_hp?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          nama?: string
+          no_hp?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          id: string
+          nama_pembeli: string
+          jenis_coklat: string
+          jumlah_pesanan: number
+          tanggal_pesan: string
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          nama_pembeli: string
+          jenis_coklat: string
+          jumlah_pesanan: number
+          tanggal_pesan: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          nama_pembeli?: string
+          jenis_coklat?: string
+          jumlah_pesanan?: number
+          tanggal_pesan?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -71,6 +128,7 @@ export type Database = {
           jumlah_keluar: number
           keterangan: string | null
           tanggal_keluar: string
+          order_id: string | null
         }
         Insert: {
           batch_id: string
@@ -80,6 +138,7 @@ export type Database = {
           jumlah_keluar: number
           keterangan?: string | null
           tanggal_keluar: string
+          order_id?: string | null
         }
         Update: {
           batch_id?: string
@@ -89,6 +148,7 @@ export type Database = {
           jumlah_keluar?: number
           keterangan?: string | null
           tanggal_keluar?: string
+          order_id?: string | null
         }
         Relationships: [
           {
@@ -98,6 +158,13 @@ export type Database = {
             referencedRelation: "batches"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "stock_out_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          }
         ]
       }
     }

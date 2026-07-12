@@ -10,6 +10,7 @@ import { AdminDashboardPage } from './routes/admin/DashboardPage'
 import { AdminBatchesPage } from './routes/admin/BatchesPage'
 import { AdminStockOutPage } from './routes/admin/StockOutPage'
 import { AdminHistoryPage } from './routes/admin/HistoryPage'
+import { AdminOrdersPage } from './routes/admin/OrdersPage'
 
 // Public Pages
 import { PublicDashboardPage } from './routes/public/DashboardPage'
@@ -40,6 +41,7 @@ function App() {
               <Route path="batches" element={<AdminBatchesPage />} />
               <Route path="stock-out" element={<AdminStockOutPage />} />
               <Route path="history" element={<AdminHistoryPage />} />
+              <Route path="orders" element={<AdminOrdersPage />} />
             </Route>
             
             {/* Catch-all route to redirect back to public home */}

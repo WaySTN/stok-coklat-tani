@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { Plus, Trash2, X, Calendar, User, Sparkles, AlertCircle, FileText } from 'lucide-react'
+import { Plus, Trash2, X, Calendar, User, Sparkles, AlertCircle, FileText, Printer, PlusCircle, MapPin } from 'lucide-react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,17 +13,68 @@ const batchSchema = z.object({
   jumlah_masuk: z.number().min(0.1, 'Jumlah minimal 0.1 Kg'),
   tanggal_masuk: z.string().min(1, 'Tanggal masuk wajib diisi'),
   tanggal_expired: z.string().min(1, 'Tanggal expired wajib diisi'),
-  asal_petani: z.string().optional(),
+  asal_petani: z.string().min(1, 'Nama petani wajib dipilih'),
+  lokasi_rak: z.string().min(1, 'Lokasi rak wajib diisi'),
   catatan: z.string().optional(),
 })
 
 type BatchForm = z.infer<typeof batchSchema>
+
+export function getFermentationStatus(tanggalMasukStr: string, jenisCoklat: string) {
+  if (jenisCoklat !== 'Fermentasi') return null;
+  
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  
+  const masukDate = new Date(tanggalMasukStr);
+  masukDate.setHours(0,0,0,0);
+  
+  // Umur (dalam hari)
+  const diffTime = today.getTime() - masukDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  const dayNum = diffDays + 1; // Hari ke-1 adalah tanggal_masuk
+  
+  if (dayNum < 1) {
+    return {
+      status: 'Menunggu',
+      text: 'Menunggu Fermentasi',
+      percent: 0,
+      color: '#D4A373',
+      bgColor: 'rgba(212, 163, 115, 0.08)'
+    };
+  } else if (dayNum <= 4) {
+    return {
+      status: 'Proses',
+      text: `Proses Fermentasi (Hari ${dayNum} dari 7)`,
+      percent: Math.round((dayNum / 7) * 100),
+      color: '#D4A373',
+      bgColor: 'rgba(212, 163, 115, 0.08)'
+    };
+  } else {
+    return {
+      status: 'Selesai',
+      text: 'Telah Terfermentasi (Siap Olah)',
+      percent: 100,
+      color: '#3B5D3A',
+      bgColor: 'rgba(59, 93, 58, 0.08)'
+    };
+  }
+}
 
 export function AdminBatchesPage() {
   const queryClient = useQueryClient()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [successAlertMsg, setSuccessAlertMsg] = useState<string | null>(null)
+
+  // Farmers Inline Register States
+  const [isAddFarmerOpen, setIsAddFarmerOpen] = useState(false)
+  const [newFarmerName, setNewFarmerName] = useState('')
+  const [newFarmerPhone, setNewFarmerPhone] = useState('')
+
+  // State to hold printable batch for print preview modal
+  const [printBatch, setPrintBatch] = useState<any | null>(null)
 
   const {
     register,
@@ -36,11 +87,49 @@ export function AdminBatchesPage() {
     resolver: zodResolver(batchSchema),
     defaultValues: {
       jenis_coklat: 'Fermentasi',
+      asal_petani: '',
+      lokasi_rak: '',
     }
   })
 
   // Watch jenis_coklat for segmented control UI
   const watchJenisCoklat = watch('jenis_coklat')
+
+  // Fetch Registered Farmers
+  const { data: farmers } = useQuery({
+    queryKey: ['farmers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('farmers')
+        .select('*')
+        .order('nama', { ascending: true })
+      if (error) throw error
+      return data
+    }
+  })
+
+  // Mutation to insert new farmer inline
+  const addFarmerMutation = useMutation({
+    mutationFn: async () => {
+      const nameClean = newFarmerName.trim()
+      if (!nameClean) throw new Error('Nama petani wajib diisi')
+      const { error } = await supabase
+        .from('farmers')
+        .insert([{ nama: nameClean, no_hp: newFarmerPhone.trim() || null }])
+      if (error) {
+        if (error.code === '23505') throw new Error('Nama petani sudah terdaftar!')
+        throw new Error(error.message)
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['farmers'] })
+      setValue('asal_petani', newFarmerName.trim()) // auto select newly created farmer
+      setIsAddFarmerOpen(false)
+      setNewFarmerName('')
+      setNewFarmerPhone('')
+      setSuccessAlertMsg('Anggota tani baru berhasil didaftarkan!')
+    }
+  })
 
   // Fetch Data Batches Aktif
   const { data: batches, isLoading } = useQuery({
@@ -162,6 +251,7 @@ export function AdminBatchesPage() {
           <div className="space-y-4">
             {batches?.map((batch, index) => {
               const progressPercent = Math.max(0, Math.min(100, (Number(batch.jumlah_sisa) / Number(batch.jumlah_masuk)) * 100))
+              const fermStatus = getFermentationStatus(batch.tanggal_masuk, batch.jenis_coklat)
               
               return (
                 <div
@@ -204,6 +294,29 @@ export function AdminBatchesPage() {
                     </div>
                   </div>
 
+                  {/* Fermentation Progress (If Fermentasi) */}
+                  {fermStatus && (
+                    <div 
+                      className="pl-2 pr-3 py-2.5 rounded-2xl border text-[11px] font-bold flex flex-col gap-2"
+                      style={{ 
+                        borderColor: `${fermStatus.color}20`, 
+                        backgroundColor: fermStatus.bgColor,
+                        color: fermStatus.color
+                      }}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span>{fermStatus.text}</span>
+                        <span>{fermStatus.percent}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-neutral-200/40 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full rounded-full transition-all duration-300 animate-pulse" 
+                          style={{ width: `${fermStatus.percent}%`, backgroundColor: fermStatus.color }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Stock Progress Bar (UX visual indicator) */}
                   <div className="pl-2 space-y-1">
                     <div className="flex justify-between text-[9px] font-bold uppercase text-neutral-400">
@@ -231,12 +344,14 @@ export function AdminBatchesPage() {
                       <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                       <span>Exp: <strong style={{ color: '#2E2015' }}>{new Date(batch.tanggal_expired).toLocaleDateString('id-ID')}</strong></span>
                     </div>
-                    {batch.asal_petani && (
-                      <div className="col-span-2 flex items-center gap-1.5 border-t border-[#FAF7F2] pt-2">
-                        <User className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                        <span>Petani: <strong style={{ color: '#2E2015' }}>{batch.asal_petani}</strong></span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      <span>Rak Gudang: <strong style={{ color: '#2E2015' }}>{batch.lokasi_rak || '-'}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      <span>Anggota Tani: <strong style={{ color: '#2E2015' }}>{batch.asal_petani}</strong></span>
+                    </div>
                     {batch.catatan && (
                       <div className="col-span-2 flex items-start gap-1.5 bg-[#FAF7F2] p-2.5 rounded-2xl border border-neutral-100 italic text-[11px] leading-relaxed">
                         <FileText className="w-3.5 h-3.5 text-[#D4A373] shrink-0 mt-0.5" />
@@ -246,7 +361,15 @@ export function AdminBatchesPage() {
                   </div>
 
                   {/* Actions Bar */}
-                  <div className="flex justify-end pt-3 border-t border-[#FAF7F2] mt-1 pl-2">
+                  <div className="flex justify-between items-center pt-3 border-t border-[#FAF7F2] mt-1 pl-2">
+                    <button
+                      onClick={() => setPrintBatch(batch)}
+                      className="flex items-center gap-1 text-[10px] font-bold text-neutral-500 hover:text-[#4A2C2A] hover:bg-neutral-100 px-2.5 py-1.5 rounded-xl border border-transparent hover:border-neutral-200 transition-all cursor-pointer"
+                      title="Cetak Label Rak / Karung"
+                    >
+                      <Printer className="w-3.5 h-3.5 text-[#D4A373]" />
+                      <span>CETAK LABEL</span>
+                    </button>
                     <button
                       onClick={() => setDeleteTargetId(batch.id)}
                       disabled={deleteMutation.isPending}
@@ -347,6 +470,7 @@ export function AdminBatchesPage() {
                     type="number" 
                     step="0.1" 
                     {...register('jumlah_masuk', { valueAsNumber: true })} 
+                    onWheel={(e) => e.currentTarget.blur()}
                     className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
                     style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
                     onFocus={(e) => { e.target.style.borderColor = '#4A2C2A'; e.target.style.boxShadow = '0 0 0 3px rgba(74, 44, 42, 0.08)' }}
@@ -384,17 +508,49 @@ export function AdminBatchesPage() {
                   </div>
                 </div>
 
-                {/* Asal Petani */}
+                {/* Lokasi Rak Gudang */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[#2E2015] tracking-wide">Asal Petani (Opsional)</label>
+                  <label className="block text-xs font-bold text-[#2E2015] tracking-wide">Lokasi Rak Gudang</label>
                   <input 
-                    {...register('asal_petani')} 
+                    {...register('lokasi_rak')} 
                     className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
                     style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
                     onFocus={(e) => { e.target.style.borderColor = '#4A2C2A'; e.target.style.boxShadow = '0 0 0 3px rgba(74, 44, 42, 0.08)' }}
                     onBlur={(e) => { e.target.style.borderColor = '#EFECE6'; e.target.style.boxShadow = 'none' }}
-                    placeholder="Nama petani/daerah asal" 
+                    placeholder="Contoh: Rak A-1, Baris 2" 
                   />
+                  {errors.lokasi_rak && <p className="text-red-600 text-[10px] font-semibold mt-1 pl-1">{errors.lokasi_rak.message}</p>}
+                </div>
+
+                {/* Anggota Kelompok Tani Dropdown */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-[#2E2015] tracking-wide flex justify-between items-center">
+                    <span>Anggota Kelompok Tani</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddFarmerOpen(true)}
+                      className="text-[10px] font-extrabold text-[#D4A373] hover:text-[#4A2C2A] flex items-center gap-1 cursor-pointer"
+                    >
+                      <PlusCircle className="w-3.5 h-3.5" />
+                      <span>Daftar Baru</span>
+                    </button>
+                  </label>
+                  
+                  <div className="relative">
+                    <select
+                      {...register('asal_petani')}
+                      className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none bg-[#FAF7F2]"
+                      style={{ borderColor: '#EFECE6', color: '#2E2015' }}
+                    >
+                      <option value="">-- Pilih Anggota Tani --</option>
+                      {farmers?.map((f) => (
+                        <option key={f.id} value={f.nama}>
+                          {f.nama} {f.no_hp ? `(${f.no_hp})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {errors.asal_petani && <p className="text-red-600 text-[10px] font-semibold mt-1 pl-1">{errors.asal_petani.message}</p>}
                 </div>
                 
                 {/* Catatan */}
@@ -463,6 +619,143 @@ export function AdminBatchesPage() {
         message={successAlertMsg || ''}
         type="success"
       />
+
+      {/* Modal Cetak Label Rak (Print Preview) */}
+      {printBatch && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
+          <div className="w-full max-w-sm rounded-3xl bg-white shadow-2xl overflow-hidden border border-neutral-100 flex flex-col animate-fade-in-up">
+            <div className="p-5 border-b border-neutral-100 flex justify-between items-center bg-neutral-50">
+              <h3 className="font-bold text-neutral-800 text-sm font-serif">Preview Cetak Label Rak</h3>
+              <button onClick={() => setPrintBatch(null)} className="text-neutral-400 hover:text-red-500 p-1 rounded-full cursor-pointer hover:bg-neutral-100 transition-all">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* The printable area */}
+            <div className="p-6 bg-neutral-50 flex justify-center">
+              <div 
+                id="printable-label"
+                className="w-full border-2 border-dashed border-[#4A2C2A] p-5 rounded-2xl bg-white flex flex-col gap-3 text-[#2E2015] shadow-sm"
+                style={{ width: '100%', maxWidth: '320px' }}
+              >
+                <div className="text-center pb-2 border-b border-[#FAF7F2]">
+                  <span className="text-[8px] font-extrabold uppercase tracking-widest text-[#D4A373] block">LABEL RAK PERSERIKATAN GUDANG</span>
+                  <h4 className="text-lg font-bold font-serif tracking-tight mt-0.5" style={{ color: '#4A2C2A' }}>{printBatch.kode_batch}</h4>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[11px]">
+                  <div>
+                    <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-wide block">Jenis Coklat</span>
+                    <span className="font-extrabold" style={{ color: printBatch.jenis_coklat === 'Fermentasi' ? '#4A2C2A' : '#3B5D3A' }}>
+                      {printBatch.jenis_coklat}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-wide block">Lokasi Rak</span>
+                    <span className="font-extrabold text-[#4A2C2A]">{printBatch.lokasi_rak || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-wide block">Jumlah Berat</span>
+                    <span className="font-extrabold">{printBatch.jumlah_masuk} Kg</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-wide block">Nama Anggota</span>
+                    <span className="font-extrabold truncate block">{printBatch.asal_petani}</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-wide block">Tgl Masuk</span>
+                    <span className="font-bold">{new Date(printBatch.tanggal_masuk).toLocaleDateString('id-ID')}</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-wide block">Tgl Expired</span>
+                    <span className="font-bold">{new Date(printBatch.tanggal_expired).toLocaleDateString('id-ID')}</span>
+                  </div>
+                </div>
+                
+                {printBatch.catatan && (
+                  <div className="text-[9px] bg-[#FAF7F2] p-2 rounded-xl border border-neutral-100 italic mt-1 leading-relaxed">
+                    "{printBatch.catatan}"
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-neutral-100 bg-white flex justify-end gap-2">
+              <button 
+                onClick={() => setPrintBatch(null)} 
+                className="px-4 py-2 text-xs font-bold text-neutral-500 hover:bg-neutral-100 rounded-xl transition-all cursor-pointer"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={() => window.print()} 
+                className="px-5 py-2 text-xs font-extrabold uppercase text-white bg-[#4A2C2A] rounded-xl flex items-center gap-1.5 shadow-md cursor-pointer hover:bg-[#6F4E37] transition-all"
+              >
+                <Printer className="w-4 h-4 text-[#D4A373]" />
+                Cetak Label
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Tambah Anggota Tani Baru (Inline) */}
+      {isAddFarmerOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-3xl bg-white shadow-2xl overflow-hidden border flex flex-col animate-fade-in-up" style={{ borderColor: '#EFECE6' }}>
+            <div className="p-5 border-b border-[#EFECE6] flex justify-between items-center bg-[#FAF7F2]">
+              <div className="flex items-center gap-2">
+                <PlusCircle className="w-4 h-4 text-[#D4A373]" />
+                <h3 className="font-bold text-[#4A2C2A] text-sm font-serif">Daftar Anggota Tani</h3>
+              </div>
+              <button onClick={() => setIsAddFarmerOpen(false)} className="text-neutral-400 hover:text-red-500 p-1 rounded-full cursor-pointer hover:bg-neutral-100">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="p-5 space-y-4">
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-[#2E2015] tracking-wide">Nama Lengkap</label>
+                <input 
+                  type="text" 
+                  value={newFarmerName} 
+                  onChange={(e) => setNewFarmerName(e.target.value)}
+                  placeholder="Contoh: Bpk. Wagimin"
+                  className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
+                  style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-[#2E2015] tracking-wide">No. Handphone (Opsional)</label>
+                <input 
+                  type="text" 
+                  value={newFarmerPhone} 
+                  onChange={(e) => setNewFarmerPhone(e.target.value)}
+                  placeholder="Contoh: 08123456789"
+                  className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
+                  style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
+                />
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-[#EFECE6] bg-[#FAF7F2] flex justify-end gap-2">
+              <button 
+                onClick={() => setIsAddFarmerOpen(false)} 
+                className="px-4 py-2 text-xs font-bold text-neutral-500 hover:bg-neutral-100 rounded-xl transition-all cursor-pointer"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={() => addFarmerMutation.mutate()} 
+                disabled={addFarmerMutation.isPending}
+                className="px-5 py-2 text-xs font-extrabold uppercase text-white bg-[#3B5D3A] rounded-xl shadow-md cursor-pointer hover:bg-[#2F4B2E] transition-all"
+              >
+                {addFarmerMutation.isPending ? 'Mendaftar...' : 'Daftarkan'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

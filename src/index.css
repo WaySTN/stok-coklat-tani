@@ -116,3 +116,30 @@ body {
 .text-danger { color: var(--brand-danger); }
 .border-brand-border { border-color: var(--brand-border); }
 .bg-danger { background-color: var(--brand-danger); }
+
+/* Print Media Styles */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #printable-label, #printable-label * {
+    visibility: visible !important;
+  }
+  #printable-label {
+    position: absolute !important;
+    left: 50% !important;
+    top: 40% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 320px !important;
+    border: 2px dashed #4A2C2A !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+}

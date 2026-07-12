@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { Home, PackagePlus, PackageMinus, History, Boxes } from 'lucide-react'
+import { Home, PackagePlus, PackageMinus, History, Boxes, ClipboardList } from 'lucide-react'
 
 const BRAND = '#4A2C2A'
 const MUTED = '#8A7968'
@@ -18,6 +18,7 @@ export function BottomNav() {
     { to: '/admin', icon: Home, label: 'Dashboard', exact: true },
     { to: '/admin/batches', icon: PackagePlus, label: 'Stok Masuk', exact: false },
     { to: '/admin/stock-out', icon: PackageMinus, label: 'Stok Keluar', exact: false },
+    { to: '/admin/orders', icon: ClipboardList, label: 'Pre-Order', exact: false },
     { to: '/admin/history', icon: History, label: 'Riwayat', exact: false },
   ]
 
