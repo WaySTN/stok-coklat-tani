@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { Plus, Trash2, X, Calendar, User, Sparkles, AlertCircle, FileText, Printer, PlusCircle, MapPin } from 'lucide-react'
@@ -620,11 +621,11 @@ export function AdminBatchesPage() {
         type="success"
       />
 
-      {/* Modal Cetak Label Rak (Print Preview) */}
-      {printBatch && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
-          <div className="w-full max-w-sm rounded-3xl bg-white shadow-2xl overflow-hidden border border-neutral-100 flex flex-col animate-fade-in-up">
-            <div className="p-5 border-b border-neutral-100 flex justify-between items-center bg-neutral-50">
+      {/* Modal Cetak Label Rak (Print Preview) - Rendered via React Portal */}
+      {printBatch && createPortal(
+        <div id="printable-label-root" className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:bg-transparent print:p-0 print:static">
+          <div className="w-full max-w-sm rounded-3xl bg-white shadow-2xl overflow-hidden border border-neutral-100 flex flex-col animate-fade-in-up print:static print:bg-transparent print:border-none print:shadow-none">
+            <div className="p-5 border-b border-neutral-100 flex justify-between items-center bg-neutral-50 print:hidden">
               <h3 className="font-bold text-neutral-800 text-sm font-serif">Preview Cetak Label Rak</h3>
               <button onClick={() => setPrintBatch(null)} className="text-neutral-400 hover:text-red-500 p-1 rounded-full cursor-pointer hover:bg-neutral-100 transition-all">
                 <X className="w-4 h-4" />
@@ -632,10 +633,10 @@ export function AdminBatchesPage() {
             </div>
             
             {/* The printable area */}
-            <div className="p-6 bg-neutral-50 flex justify-center">
+            <div className="p-6 bg-neutral-50 flex justify-center print:bg-transparent print:p-0">
               <div 
                 id="printable-label"
-                className="w-full border-2 border-dashed border-[#4A2C2A] p-5 rounded-2xl bg-white flex flex-col gap-3 text-[#2E2015] shadow-sm"
+                className="w-full border-2 border-dashed border-[#4A2C2A] p-5 rounded-2xl bg-white flex flex-col gap-3 text-[#2E2015] shadow-sm print:m-0 print:border-2"
                 style={{ width: '100%', maxWidth: '320px' }}
               >
                 <div className="text-center pb-2 border-b border-[#FAF7F2]">
@@ -680,23 +681,29 @@ export function AdminBatchesPage() {
               </div>
             </div>
             
-            <div className="p-4 border-t border-neutral-100 bg-white flex justify-end gap-2">
-              <button 
-                onClick={() => setPrintBatch(null)} 
-                className="px-4 py-2 text-xs font-bold text-neutral-500 hover:bg-neutral-100 rounded-xl transition-all cursor-pointer"
-              >
-                Batal
-              </button>
-              <button 
-                onClick={() => window.print()} 
-                className="px-5 py-2 text-xs font-extrabold uppercase text-white bg-[#4A2C2A] rounded-xl flex items-center gap-1.5 shadow-md cursor-pointer hover:bg-[#6F4E37] transition-all"
-              >
-                <Printer className="w-4 h-4 text-[#D4A373]" />
-                Cetak Label
-              </button>
+            <div className="p-4 border-t border-neutral-100 bg-white flex flex-col gap-2 print:hidden">
+              <div className="flex justify-end gap-2">
+                <button 
+                  onClick={() => setPrintBatch(null)} 
+                  className="px-4 py-2 text-xs font-bold text-neutral-500 hover:bg-neutral-100 rounded-xl transition-all cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={() => window.print()} 
+                  className="px-5 py-2 text-xs font-extrabold uppercase text-white bg-[#4A2C2A] rounded-xl flex items-center gap-1.5 shadow-md cursor-pointer hover:bg-[#6F4E37] transition-all"
+                >
+                  <Printer className="w-4 h-4 text-[#D4A373]" />
+                  Cetak Label
+                </button>
+              </div>
+              <p className="text-[9px] text-center text-neutral-400 font-medium">
+                Tip: Pilih tujuan printer <strong>"Save as PDF"</strong> / <strong>"Simpan sebagai PDF"</strong> untuk mengunduh label.
+              </p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Tambah Anggota Tani Baru (Inline) */}

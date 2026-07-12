@@ -119,27 +119,33 @@ body {
 
 /* Print Media Styles */
 @media print {
-  body * {
-    visibility: hidden !important;
+  /* Sembunyikan seluruh container utama selain portal cetak */
+  body > *:not(#printable-label-root) {
+    display: none !important;
   }
-  #printable-label, #printable-label * {
-    visibility: visible !important;
+  
+  #printable-label-root {
+    display: block !important;
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
+
+  /* Sembunyikan elemen UI preview modal saat cetak */
+  #printable-label-root .print\:hidden {
+    display: none !important;
+  }
+
   #printable-label {
-    position: absolute !important;
-    left: 50% !important;
-    top: 40% !important;
-    transform: translate(-50%, -50%) !important;
-    width: 320px !important;
     border: 2px dashed #4A2C2A !important;
     border-radius: 12px !important;
-    padding: 20px !important;
+    padding: 24px !important;
+    width: 320px !important;
+    margin: 50px auto !important;
     background-color: #ffffff !important;
     box-shadow: none !important;
     display: flex !important;
     flex-direction: column !important;
-  }
-  .print\:hidden {
-    display: none !important;
   }
 }
