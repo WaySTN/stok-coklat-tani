@@ -53,7 +53,16 @@ export function AdminOrdersPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          stock_out (
+            id,
+            jumlah_keluar,
+            batches (
+              kode_batch
+            )
+          )
+        `)
         .order('created_at', { ascending: false })
       if (error) throw error
       return data
@@ -338,6 +347,26 @@ export function AdminOrdersPage() {
                     </strong>
                   </div>
                 </div>
+
+                {/* Breakdown Alokasi Batch jika Selesai */}
+                {order.status === 'Selesai' && order.stock_out && order.stock_out.length > 0 && (
+                  <div className="pt-3 border-t border-[#FAF7F2] space-y-1.5">
+                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider block">Diambil Dari Batch:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {order.stock_out.map((so: any) => (
+                        <div 
+                          key={so.id}
+                          className="px-2.5 py-1 rounded-xl border border-neutral-100 text-[10px] font-bold flex items-center gap-1.5 bg-[#FAF7F2]"
+                          style={{ color: '#4A2C2A' }}
+                        >
+                          <span>{so.batches?.kode_batch || 'Batch Terhapus'}</span>
+                          <span className="text-neutral-300">|</span>
+                          <span className="text-[#3B5D3A]">{so.jumlah_keluar} Kg</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Action button if pending */}
                 {order.status === 'Pending' && (
