@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { Plus, Trash2, X, Calendar, User, Sparkles, AlertCircle, FileText, Printer, PlusCircle, MapPin } from 'lucide-react'
+import { Plus, Trash2, X, Calendar, User, Sparkles, AlertCircle, FileText, Printer, Users, MapPin } from 'lucide-react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ConfirmModal } from '../../components/ConfirmModal'
+import { FarmerManager } from '../../components/FarmerManager'
 
 const batchSchema = z.object({
   kode_batch: z.string().min(1, 'Kode batch wajib diisi'),
@@ -69,10 +70,8 @@ export function AdminBatchesPage() {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [successAlertMsg, setSuccessAlertMsg] = useState<string | null>(null)
 
-  // Farmers Inline Register States
-  const [isAddFarmerOpen, setIsAddFarmerOpen] = useState(false)
-  const [newFarmerName, setNewFarmerName] = useState('')
-  const [newFarmerPhone, setNewFarmerPhone] = useState('')
+  // Farmer Manager State
+  const [isFarmerManagerOpen, setIsFarmerManagerOpen] = useState(false)
 
   // State to hold printable batch for print preview modal
   const [printBatch, setPrintBatch] = useState<any | null>(null)
@@ -109,28 +108,10 @@ export function AdminBatchesPage() {
     }
   })
 
-  // Mutation to insert new farmer inline
-  const addFarmerMutation = useMutation({
-    mutationFn: async () => {
-      const nameClean = newFarmerName.trim()
-      if (!nameClean) throw new Error('Nama petani wajib diisi')
-      const { error } = await supabase
-        .from('farmers')
-        .insert([{ nama: nameClean, no_hp: newFarmerPhone.trim() || null }])
-      if (error) {
-        if (error.code === '23505') throw new Error('Nama petani sudah terdaftar!')
-        throw new Error(error.message)
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['farmers'] })
-      setValue('asal_petani', newFarmerName.trim()) // auto select newly created farmer
-      setIsAddFarmerOpen(false)
-      setNewFarmerName('')
-      setNewFarmerPhone('')
-      setSuccessAlertMsg('Anggota tani baru berhasil didaftarkan!')
-    }
-  })
+  // Handler saat farmer dipilih dari FarmerManager
+  const handleSelectFarmer = (farmerName: string) => {
+    setValue('asal_petani', farmerName)
+  }
 
   // Fetch Data Batches Aktif
   const { data: batches, isLoading } = useQuery({
@@ -529,11 +510,11 @@ export function AdminBatchesPage() {
                     <span>Anggota Kelompok Tani</span>
                     <button
                       type="button"
-                      onClick={() => setIsAddFarmerOpen(true)}
-                      className="text-[10px] font-extrabold text-[#D4A373] hover:text-[#4A2C2A] flex items-center gap-1 cursor-pointer"
+                      onClick={() => setIsFarmerManagerOpen(true)}
+                      className="text-[10px] font-extrabold text-[#4A2C2A] hover:text-[#6F4E37] flex items-center gap-1 cursor-pointer bg-[#4A2C2A]/5 hover:bg-[#4A2C2A]/10 px-2 py-0.5 rounded-lg transition-all"
                     >
-                      <PlusCircle className="w-3.5 h-3.5" />
-                      <span>Daftar Baru</span>
+                      <Users className="w-3.5 h-3.5" />
+                      <span>Kelola</span>
                     </button>
                   </label>
                   
@@ -706,63 +687,12 @@ export function AdminBatchesPage() {
         document.body
       )}
 
-      {/* Modal Tambah Anggota Tani Baru (Inline) */}
-      {isAddFarmerOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-3xl bg-white shadow-2xl overflow-hidden border flex flex-col animate-fade-in-up" style={{ borderColor: '#EFECE6' }}>
-            <div className="p-5 border-b border-[#EFECE6] flex justify-between items-center bg-[#FAF7F2]">
-              <div className="flex items-center gap-2">
-                <PlusCircle className="w-4 h-4 text-[#D4A373]" />
-                <h3 className="font-bold text-[#4A2C2A] text-sm font-serif">Daftar Anggota Tani</h3>
-              </div>
-              <button onClick={() => setIsAddFarmerOpen(false)} className="text-neutral-400 hover:text-red-500 p-1 rounded-full cursor-pointer hover:bg-neutral-100">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            
-            <div className="p-5 space-y-4">
-              <div className="space-y-1">
-                <label className="block text-[11px] font-bold text-[#2E2015] tracking-wide">Nama Lengkap</label>
-                <input 
-                  type="text" 
-                  value={newFarmerName} 
-                  onChange={(e) => setNewFarmerName(e.target.value)}
-                  placeholder="Contoh: Bpk. Wagimin"
-                  className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
-                  style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="block text-[11px] font-bold text-[#2E2015] tracking-wide">No. Handphone (Opsional)</label>
-                <input 
-                  type="text" 
-                  value={newFarmerPhone} 
-                  onChange={(e) => setNewFarmerPhone(e.target.value)}
-                  placeholder="Contoh: 08123456789"
-                  className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
-                  style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
-                />
-              </div>
-            </div>
-            
-            <div className="p-4 border-t border-[#EFECE6] bg-[#FAF7F2] flex justify-end gap-2">
-              <button 
-                onClick={() => setIsAddFarmerOpen(false)} 
-                className="px-4 py-2 text-xs font-bold text-neutral-500 hover:bg-neutral-100 rounded-xl transition-all cursor-pointer"
-              >
-                Batal
-              </button>
-              <button 
-                onClick={() => addFarmerMutation.mutate()} 
-                disabled={addFarmerMutation.isPending}
-                className="px-5 py-2 text-xs font-extrabold uppercase text-white bg-[#3B5D3A] rounded-xl shadow-md cursor-pointer hover:bg-[#2F4B2E] transition-all"
-              >
-                {addFarmerMutation.isPending ? 'Mendaftar...' : 'Daftarkan'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal Kelola Anggota Tani (Full CRUD) */}
+      <FarmerManager
+        isOpen={isFarmerManagerOpen}
+        onClose={() => setIsFarmerManagerOpen(false)}
+        onSelectFarmer={handleSelectFarmer}
+      />
     </div>
   )
 }
