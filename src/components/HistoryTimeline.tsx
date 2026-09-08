@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import {
   ChevronDown, ChevronUp, Calendar, Info, Clock,
   AlertCircle, ArrowDownLeft, ArrowUpRight, User,
-  Filter, Search
+  Filter
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────
