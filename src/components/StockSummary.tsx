@@ -33,7 +33,7 @@ export function StockSummary() {
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
           const dayNum = diffDays + 1
 
-          if (dayNum >= 5) {
+          if (dayNum > 5) {
             fermentasiSiap += sisa
           } else {
             fermentasiProses += sisa
@@ -190,7 +190,7 @@ export function StockSummary() {
               <span className="text-[10px] font-bold text-neutral-400">Kg</span>
             </div>
             <p className="text-[9px] text-neutral-400 mt-1 leading-relaxed">
-              Masa fermentasi aktif hari ke 1-4.
+              Masa fermentasi aktif hari ke 1-5.
             </p>
           </div>
 
@@ -207,7 +207,7 @@ export function StockSummary() {
               <span className="text-[10px] font-bold text-neutral-400">Kg</span>
             </div>
             <p className="text-[9px] text-neutral-400 mt-1 leading-relaxed">
-              Masa fermentasi hari ke 5-7+ (Siap Olah).
+              Masa fermentasi hari ke 6+ (Siap Olah).
             </p>
           </div>
         </div>

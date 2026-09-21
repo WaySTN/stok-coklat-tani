@@ -46,11 +46,11 @@ export function getFermentationStatus(tanggalMasukStr: string, jenisCoklat: stri
       color: '#D4A373',
       bgColor: 'rgba(212, 163, 115, 0.08)'
     };
-  } else if (dayNum <= 4) {
+  } else if (dayNum <= 5) {
     return {
       status: 'Proses',
-      text: `Proses Fermentasi (Hari ${dayNum} dari 7)`,
-      percent: Math.round((dayNum / 7) * 100),
+      text: `Proses Fermentasi (Hari ${dayNum} dari 5)`,
+      percent: Math.min(100, Math.round((dayNum / 5) * 100)),
       color: '#D4A373',
       bgColor: 'rgba(212, 163, 115, 0.08)'
     };
