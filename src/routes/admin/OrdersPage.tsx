@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { 
   ClipboardList, Plus, X, Sparkles, 
-  ArrowRightLeft, CheckCircle2, ShoppingBag, MapPin, RotateCcw 
+  ArrowRightLeft, CheckCircle2, ShoppingBag, MapPin, Trash2 
 } from 'lucide-react'
 import { ConfirmModal } from '../../components/ConfirmModal'
 
@@ -30,8 +30,8 @@ export function AdminOrdersPage() {
   const [allocationInputs, setAllocationInputs] = useState<Record<string, number>>({})
   const [allocationError, setAllocationError] = useState<string | null>(null)
 
-  // Cancel Allocation Modal State
-  const [cancelOrderTarget, setCancelOrderTarget] = useState<any | null>(null)
+  // Delete/Cancel Pending Order Modal State
+  const [deleteOrderTarget, setDeleteOrderTarget] = useState<any | null>(null)
 
   const {
     register,
@@ -177,77 +177,24 @@ export function AdminOrdersPage() {
     }
   })
 
-  // Mutation to Cancel Stock Allocation (Rollback to Batches & Status back to Pending)
-  const cancelAllocationMutation = useMutation({
+  // Mutation to Cancel/Delete Pending Pre-Order
+  const deleteOrderMutation = useMutation({
     mutationFn: async (order: any) => {
-      // 1. Fetch all stock_out records linked to this order
-      const { data: stockOutItems, error: soErr } = await supabase
-        .from('stock_out')
-        .select('id, batch_id, jumlah_keluar')
-        .eq('order_id', order.id)
-
-      if (soErr) throw new Error(`Gagal membaca catatan pengeluaran stok: ${soErr.message}`)
-
-      // 2. Return the stock amounts back to their respective batches
-      if (stockOutItems && stockOutItems.length > 0) {
-        for (const item of stockOutItems) {
-          const { data: batchData, error: batchErr } = await supabase
-            .from('batches')
-            .select('jumlah_sisa, kode_batch')
-            .eq('id', item.batch_id)
-            .single()
-
-          if (!batchErr && batchData) {
-            const restoredSisa = Number((Number(batchData.jumlah_sisa) + Number(item.jumlah_keluar)).toFixed(2))
-            const { error: updateErr } = await supabase
-              .from('batches')
-              .update({
-                jumlah_sisa: restoredSisa,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', item.batch_id)
-
-            if (updateErr) {
-              throw new Error(`Gagal mengembalikan stok ke batch ${batchData.kode_batch}: ${updateErr.message}`)
-            }
-          }
-        }
-
-        // 3. Delete the stock_out records for this order
-        const { error: delErr } = await supabase
-          .from('stock_out')
-          .delete()
-          .eq('order_id', order.id)
-
-        if (delErr) {
-          throw new Error(`Gagal menghapus log pengeluaran stok: ${delErr.message}`)
-        }
-      }
-
-      // 4. Update order status back to 'Pending'
-      const { error: orderErr } = await supabase
+      const { error } = await supabase
         .from('orders')
-        .update({
-          status: 'Pending',
-          updated_at: new Date().toISOString()
-        })
+        .delete()
         .eq('id', order.id)
 
-      if (orderErr) {
-        throw new Error(`Gagal memperbarui status pesanan: ${orderErr.message}`)
-      }
+      if (error) throw new Error(error.message)
     },
     onSuccess: (_, order) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] })
-      queryClient.invalidateQueries({ queryKey: ['batches'] })
-      queryClient.invalidateQueries({ queryKey: ['stock-summary'] })
-      queryClient.invalidateQueries({ queryKey: ['history'] })
-      setSuccessAlertMsg(`Alokasi stok untuk ${order.nama_pembeli} berhasil dibatalkan. Stok telah dikembalikan ke gudang!`)
-      setCancelOrderTarget(null)
+      setSuccessAlertMsg(`Pesanan untuk ${order.nama_pembeli} sebesar ${order.jumlah_pesanan} Kg berhasil dibatalkan.`)
+      setDeleteOrderTarget(null)
     },
     onError: (err: any) => {
-      setCancelOrderTarget(null)
-      alert(err.message || 'Terjadi kesalahan saat membatalkan alokasi stok.')
+      setDeleteOrderTarget(null)
+      alert(err.message || 'Gagal membatalkan pesanan.')
     }
   })
 
@@ -446,9 +393,19 @@ export function AdminOrdersPage() {
                   </div>
                 )}
 
-                {/* Action button if pending */}
+                {/* Action button if pending: Batalkan Pesanan (kiri) & Alokasi Stok (kanan) */}
                 {order.status === 'Pending' && (
-                  <div className="flex justify-end pt-3 border-t border-[#FAF7F2]">
+                  <div className="flex justify-end items-center gap-2 pt-3 border-t border-[#FAF7F2]">
+                    <button
+                      onClick={() => setDeleteOrderTarget(order)}
+                      disabled={deleteOrderMutation.isPending}
+                      className="px-3 py-2 text-[10px] font-bold text-red-600/90 hover:text-red-700 hover:bg-red-500/10 rounded-xl border border-red-200/80 transition-all duration-200 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                      title="Batalkan / Hapus Pesanan Pre-Order"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                      <span>Batalkan Pesanan</span>
+                    </button>
+
                     <button
                       onClick={() => {
                         setAllocatingOrder(order)
@@ -460,21 +417,6 @@ export function AdminOrdersPage() {
                     >
                       <ArrowRightLeft className="w-3.5 h-3.5 text-[#D4A373]" />
                       <span>Alokasi Stok</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* Action button if selesai (Batalkan Alokasi) */}
-                {order.status === 'Selesai' && (
-                  <div className="flex justify-end pt-3 border-t border-[#FAF7F2]">
-                    <button
-                      onClick={() => setCancelOrderTarget(order)}
-                      disabled={cancelAllocationMutation.isPending}
-                      className="px-3.5 py-1.5 text-[10px] font-bold text-red-600/90 hover:text-red-700 hover:bg-red-500/10 rounded-xl border border-red-200/80 transition-all duration-200 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
-                      title="Batalkan alokasi stok dan kembalikan ke gudang"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5 text-red-500" />
-                      <span>Batalkan Alokasi</span>
                     </button>
                   </div>
                 )}
@@ -722,19 +664,19 @@ export function AdminOrdersPage() {
         </div>
       )}
 
-      {/* Cancel Allocation Confirmation Modal */}
+      {/* Cancel/Delete Pending Order Confirmation Modal */}
       <ConfirmModal
-        isOpen={cancelOrderTarget !== null}
-        onClose={() => setCancelOrderTarget(null)}
+        isOpen={deleteOrderTarget !== null}
+        onClose={() => setDeleteOrderTarget(null)}
         onConfirm={() => {
-          if (cancelOrderTarget) {
-            cancelAllocationMutation.mutate(cancelOrderTarget)
+          if (deleteOrderTarget) {
+            deleteOrderMutation.mutate(deleteOrderTarget)
           }
         }}
-        title="Batalkan Alokasi Stok?"
-        message={`Alokasi stok untuk pesanan "${cancelOrderTarget?.nama_pembeli}" (${cancelOrderTarget?.jumlah_pesanan} Kg) akan dibatalkan. Stok akan otomatis dikembalikan ke masing-masing batch asal dan status pesanan kembali menjadi "Pending".`}
+        title="Batalkan Pesanan?"
+        message={`Pesanan Pre-Order atas nama "${deleteOrderTarget?.nama_pembeli}" sebesar ${deleteOrderTarget?.jumlah_pesanan} Kg akan dibatalkan dan dihapus dari daftar pesanan.`}
         type="danger"
-        confirmText="Ya, Batalkan Alokasi"
+        confirmText="Ya, Batalkan Pesanan"
         cancelText="Batal"
       />
 
