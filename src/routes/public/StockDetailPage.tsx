@@ -77,7 +77,7 @@ export function PublicStockDetailPage() {
             type="text" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari kode batch atau petani..." 
+            placeholder="Cari kode batch atau pengirim..." 
             className="w-full text-xs outline-none text-[#2E2015] bg-transparent"
           />
         </div>
@@ -228,11 +228,11 @@ export function PublicStockDetailPage() {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                      <span>Rak Gudang: <strong style={{ color: '#2E2015' }}>{batch.lokasi_rak || '-'}</strong></span>
+                      <span>Lokasi Gudang: <strong style={{ color: '#2E2015' }}>{batch.lokasi_rak || '-'}</strong></span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                      <span>Anggota Tani: <strong style={{ color: '#2E2015' }}>{batch.asal_petani}</strong></span>
+                      <span>Nama Pengirim: <strong style={{ color: '#2E2015' }}>{batch.asal_petani}</strong></span>
                     </div>
                     {batch.catatan && (
                       <div className="col-span-2 flex items-start gap-1.5 bg-[#FAF7F2] p-2.5 rounded-2xl border border-neutral-100 italic text-[11px] leading-relaxed">

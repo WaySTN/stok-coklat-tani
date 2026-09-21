@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ConfirmModal } from '../../components/ConfirmModal'
 import { FarmerManager } from '../../components/FarmerManager'
+import { Barcode } from '../../components/Barcode'
 
 const batchSchema = z.object({
   kode_batch: z.string().min(1, 'Kode batch wajib diisi'),
@@ -15,8 +16,8 @@ const batchSchema = z.object({
   jumlah_masuk: z.number().min(0.1, 'Jumlah minimal 0.1 Kg'),
   tanggal_masuk: z.string().min(1, 'Tanggal masuk wajib diisi'),
   tanggal_expired: z.string().min(1, 'Tanggal expired wajib diisi'),
-  asal_petani: z.string().min(1, 'Nama petani wajib dipilih'),
-  lokasi_rak: z.string().min(1, 'Lokasi rak wajib diisi'),
+  asal_petani: z.string().min(1, 'Nama pengirim wajib dipilih'),
+  lokasi_rak: z.string().min(1, 'Lokasi gudang wajib diisi'),
   catatan: z.string().optional(),
 })
 
@@ -328,11 +329,11 @@ export function AdminBatchesPage() {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                      <span>Rak Gudang: <strong style={{ color: '#2E2015' }}>{batch.lokasi_rak || '-'}</strong></span>
+                      <span>Lokasi Gudang: <strong style={{ color: '#2E2015' }}>{batch.lokasi_rak || '-'}</strong></span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                      <span>Anggota Tani: <strong style={{ color: '#2E2015' }}>{batch.asal_petani}</strong></span>
+                      <span>Nama Pengirim: <strong style={{ color: '#2E2015' }}>{batch.asal_petani}</strong></span>
                     </div>
                     {batch.catatan && (
                       <div className="col-span-2 flex items-start gap-1.5 bg-[#FAF7F2] p-2.5 rounded-2xl border border-neutral-100 italic text-[11px] leading-relaxed">
@@ -347,7 +348,7 @@ export function AdminBatchesPage() {
                     <button
                       onClick={() => setPrintBatch(batch)}
                       className="flex items-center gap-1 text-[10px] font-bold text-neutral-500 hover:text-[#4A2C2A] hover:bg-neutral-100 px-2.5 py-1.5 rounded-xl border border-transparent hover:border-neutral-200 transition-all cursor-pointer"
-                      title="Cetak Label Rak / Karung"
+                      title="Cetak Label Gudang / Karung"
                     >
                       <Printer className="w-3.5 h-3.5 text-[#D4A373]" />
                       <span>CETAK LABEL</span>
@@ -490,28 +491,29 @@ export function AdminBatchesPage() {
                   </div>
                 </div>
 
-                {/* Lokasi Rak Gudang */}
+                {/* Lokasi Gudang */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[#2E2015] tracking-wide">Lokasi Rak Gudang</label>
+                  <label className="block text-xs font-bold text-[#2E2015] tracking-wide">Lokasi Gudang</label>
                   <input 
                     {...register('lokasi_rak')} 
                     className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none" 
                     style={{ backgroundColor: '#FAF7F2', borderColor: '#EFECE6' }}
                     onFocus={(e) => { e.target.style.borderColor = '#4A2C2A'; e.target.style.boxShadow = '0 0 0 3px rgba(74, 44, 42, 0.08)' }}
                     onBlur={(e) => { e.target.style.borderColor = '#EFECE6'; e.target.style.boxShadow = 'none' }}
-                    placeholder="Contoh: Rak A-1, Baris 2" 
+                    placeholder="Contoh: Gudang A, Baris 2" 
                   />
                   {errors.lokasi_rak && <p className="text-red-600 text-[10px] font-semibold mt-1 pl-1">{errors.lokasi_rak.message}</p>}
                 </div>
 
-                {/* Anggota Kelompok Tani Dropdown */}
+                {/* Nama Pengirim Dropdown */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-[#2E2015] tracking-wide flex justify-between items-center">
-                    <span>Anggota Kelompok Tani</span>
+                    <span>Nama Pengirim</span>
                     <button
                       type="button"
                       onClick={() => setIsFarmerManagerOpen(true)}
                       className="text-[10px] font-extrabold text-[#4A2C2A] hover:text-[#6F4E37] flex items-center gap-1 cursor-pointer bg-[#4A2C2A]/5 hover:bg-[#4A2C2A]/10 px-2 py-0.5 rounded-lg transition-all"
+                      title="Kelola Daftar Pengirim"
                     >
                       <Users className="w-3.5 h-3.5" />
                       <span>Kelola</span>
@@ -524,7 +526,7 @@ export function AdminBatchesPage() {
                       className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none bg-[#FAF7F2]"
                       style={{ borderColor: '#EFECE6', color: '#2E2015' }}
                     >
-                      <option value="">-- Pilih Anggota Tani --</option>
+                      <option value="">-- Pilih Pengirim --</option>
                       {farmers?.map((f) => (
                         <option key={f.id} value={f.nama}>
                           {f.nama} {f.no_hp ? `(${f.no_hp})` : ''}
@@ -602,12 +604,12 @@ export function AdminBatchesPage() {
         type="success"
       />
 
-      {/* Modal Cetak Label Rak (Print Preview) - Rendered via React Portal */}
+      {/* Modal Cetak Label Gudang (Print Preview) - Rendered via React Portal */}
       {printBatch && createPortal(
         <div id="printable-label-root" className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:bg-transparent print:p-0 print:static">
           <div className="w-full max-w-sm rounded-3xl bg-white shadow-2xl overflow-hidden border border-neutral-100 flex flex-col animate-fade-in-up print:static print:bg-transparent print:border-none print:shadow-none">
             <div className="p-5 border-b border-neutral-100 flex justify-between items-center bg-neutral-50 print:hidden">
-              <h3 className="font-bold text-neutral-800 text-sm font-serif">Preview Cetak Label Rak</h3>
+              <h3 className="font-bold text-neutral-800 text-sm font-serif">Preview Cetak Label Gudang</h3>
               <button onClick={() => setPrintBatch(null)} className="text-neutral-400 hover:text-red-500 p-1 rounded-full cursor-pointer hover:bg-neutral-100 transition-all">
                 <X className="w-4 h-4" />
               </button>
@@ -621,7 +623,7 @@ export function AdminBatchesPage() {
                 style={{ width: '100%', maxWidth: '320px' }}
               >
                 <div className="text-center pb-2 border-b border-[#FAF7F2]">
-                  <span className="text-[8px] font-extrabold uppercase tracking-widest text-[#D4A373] block">LABEL RAK PERSERIKATAN GUDANG</span>
+                  <span className="text-[8px] font-extrabold uppercase tracking-widest text-[#D4A373] block">LABEL GUDANG PERSERIKATAN</span>
                   <h4 className="text-lg font-bold font-serif tracking-tight mt-0.5" style={{ color: '#4A2C2A' }}>{printBatch.kode_batch}</h4>
                 </div>
                 
@@ -633,7 +635,7 @@ export function AdminBatchesPage() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-wide block">Lokasi Rak</span>
+                    <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-wide block">Lokasi Gudang</span>
                     <span className="font-extrabold text-[#4A2C2A]">{printBatch.lokasi_rak || '-'}</span>
                   </div>
                   <div>
@@ -641,7 +643,7 @@ export function AdminBatchesPage() {
                     <span className="font-extrabold">{printBatch.jumlah_masuk} Kg</span>
                   </div>
                   <div>
-                    <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-wide block">Nama Anggota</span>
+                    <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-wide block">Nama Pengirim</span>
                     <span className="font-extrabold truncate block">{printBatch.asal_petani}</span>
                   </div>
                   <div>
@@ -659,6 +661,14 @@ export function AdminBatchesPage() {
                     "{printBatch.catatan}"
                   </div>
                 )}
+
+                {/* Barcode Section (Code 128 - Otomatis Mengisi Kode Batch) */}
+                <div className="pt-2 border-t border-[#FAF7F2] flex flex-col items-center justify-center">
+                  <Barcode value={printBatch.kode_batch} width={1.4} height={38} displayValue={false} />
+                  <span className="text-[9px] font-mono tracking-widest text-[#5E4E42] mt-1 font-bold">
+                    *{printBatch.kode_batch}*
+                  </span>
+                </div>
               </div>
             </div>
             
@@ -687,7 +697,7 @@ export function AdminBatchesPage() {
         document.body
       )}
 
-      {/* Modal Kelola Anggota Tani (Full CRUD) */}
+      {/* Modal Kelola Pengirim (Full CRUD) */}
       <FarmerManager
         isOpen={isFarmerManagerOpen}
         onClose={() => setIsFarmerManagerOpen(false)}

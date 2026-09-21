@@ -218,4 +218,18 @@ body {
     line-height: 1.6 !important;
     border-radius: 12px !important;
   }
+
+  #printable-label svg {
+    display: block !important;
+    max-width: 280px !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 4px auto 0 !important;
+  }
+
+  #printable-label span.font-mono {
+    font-size: 13px !important;
+    letter-spacing: 0.15em !important;
+    display: block !important;
+  }
 }

@@ -53,12 +53,12 @@ export function FarmerManager({ isOpen, onClose, onSelectFarmer }: FarmerManager
   const addMutation = useMutation({
     mutationFn: async () => {
       const nameClean = inputName.trim()
-      if (!nameClean) throw new Error('Nama anggota tani wajib diisi')
+      if (!nameClean) throw new Error('Nama pengirim wajib diisi')
       const { error } = await supabase
         .from('farmers')
         .insert([{ nama: nameClean, no_hp: inputPhone.trim() || null }])
       if (error) {
-        if (error.code === '23505') throw new Error('Nama anggota tani sudah terdaftar!')
+        if (error.code === '23505') throw new Error('Nama pengirim sudah terdaftar!')
         throw new Error(error.message)
       }
     },
@@ -69,7 +69,7 @@ export function FarmerManager({ isOpen, onClose, onSelectFarmer }: FarmerManager
       setMode('list')
     },
     onError: (err: any) => {
-      setErrorMsg(err.message || 'Gagal menambahkan anggota tani.')
+      setErrorMsg(err.message || 'Gagal menambahkan pengirim.')
     },
   })
 
@@ -78,19 +78,19 @@ export function FarmerManager({ isOpen, onClose, onSelectFarmer }: FarmerManager
     mutationFn: async () => {
       if (!editingFarmer) return
       const nameClean = inputName.trim()
-      if (!nameClean) throw new Error('Nama anggota tani wajib diisi')
+      if (!nameClean) throw new Error('Nama pengirim wajib diisi')
       const { error } = await supabase
         .from('farmers')
         .update({ nama: nameClean, no_hp: inputPhone.trim() || null })
         .eq('id', editingFarmer.id)
       if (error) {
-        if (error.code === '23505') throw new Error('Nama anggota tani sudah digunakan!')
+        if (error.code === '23505') throw new Error('Nama pengirim sudah digunakan!')
         throw new Error(error.message)
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['farmers'] })
-      setSuccessMsg(`Data anggota tani berhasil diperbarui!`)
+      setSuccessMsg(`Data pengirim berhasil diperbarui!`)
       resetForm()
       setMode('list')
     },
@@ -110,7 +110,7 @@ export function FarmerManager({ isOpen, onClose, onSelectFarmer }: FarmerManager
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['farmers'] })
-      setSuccessMsg('Anggota tani berhasil dihapus dari daftar.')
+      setSuccessMsg('Pengirim berhasil dihapus dari daftar.')
       setDeleteTarget(null)
     },
     onError: (err: any) => {
@@ -170,7 +170,7 @@ export function FarmerManager({ isOpen, onClose, onSelectFarmer }: FarmerManager
             <div className="flex items-center gap-2">
               <Users className="w-4.5 h-4.5 text-[#4A2C2A]" />
               <h2 className="font-bold text-[#4A2C2A] text-base font-serif">
-                {mode === 'list' ? 'Anggota Kelompok Tani' : mode === 'add' ? 'Tambah Anggota Baru' : 'Edit Data Anggota'}
+                {mode === 'list' ? 'Daftar Pengirim' : mode === 'add' ? 'Tambah Pengirim Baru' : 'Edit Data Pengirim'}
               </h2>
             </div>
             <button
@@ -193,7 +193,7 @@ export function FarmerManager({ isOpen, onClose, onSelectFarmer }: FarmerManager
                   style={{ borderColor: '#D4A373', color: '#4A2C2A' }}
                 >
                   <PlusCircle className="w-4 h-4 text-[#D4A373]" />
-                  <span>Tambah Anggota Baru</span>
+                  <span>Tambah Pengirim Baru</span>
                 </button>
 
                 {/* Loading State */}
@@ -205,7 +205,7 @@ export function FarmerManager({ isOpen, onClose, onSelectFarmer }: FarmerManager
                 ) : farmers?.length === 0 ? (
                   <div className="text-center py-8">
                     <Users className="w-10 h-10 text-neutral-300 mx-auto mb-2" />
-                    <p className="text-xs text-neutral-400">Belum ada anggota terdaftar.</p>
+                    <p className="text-xs text-neutral-400">Belum ada pengirim terdaftar.</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -271,7 +271,7 @@ export function FarmerManager({ isOpen, onClose, onSelectFarmer }: FarmerManager
                 {/* Counter */}
                 {farmers && farmers.length > 0 && (
                   <p className="text-[10px] text-center text-neutral-400 font-medium pt-2">
-                    Total: {farmers.length} anggota terdaftar
+                    Total: {farmers.length} pengirim terdaftar
                   </p>
                 )}
               </div>
@@ -374,8 +374,8 @@ export function FarmerManager({ isOpen, onClose, onSelectFarmer }: FarmerManager
         onConfirm={() => {
           if (deleteTarget) deleteMutation.mutate(deleteTarget.id)
         }}
-        title="Hapus Anggota Tani?"
-        message={`"${deleteTarget?.nama}" akan dihapus dari daftar anggota kelompok tani. Aksi ini tidak bisa dibatalkan.`}
+        title="Hapus Pengirim?"
+        message={`"${deleteTarget?.nama}" akan dihapus dari daftar pengirim. Aksi ini tidak bisa dibatalkan.`}
         type="danger"
         confirmText="Ya, Hapus"
         cancelText="Batal"

@@ -458,12 +458,12 @@ export function HistoryTimeline() {
                       </span>
                     </div>
 
-                    {/* Petani (for masuk) */}
+                    {/* Pengirim (for masuk) */}
                     {isMasuk && entry.asal_petani && (
                       <div className="flex items-center gap-2">
                         <User className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                         <span>
-                          Anggota Tani:{' '}
+                          Nama Pengirim:{' '}
                           <strong style={{ color: '#2E2015' }}>{entry.asal_petani}</strong>
                         </span>
                       </div>
