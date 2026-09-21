@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ConfirmModal } from '../../components/ConfirmModal'
 import { FarmerManager } from '../../components/FarmerManager'
-import { Barcode } from '../../components/Barcode'
+import { QRCodeLabel } from '../../components/QRCodeLabel'
 
 const batchSchema = z.object({
   kode_batch: z.string().min(1, 'Kode batch wajib diisi'),
@@ -662,12 +662,9 @@ export function AdminBatchesPage() {
                   </div>
                 )}
 
-                {/* Barcode Section (Code 128 - Otomatis Mengisi Kode Batch) */}
-                <div className="pt-2 border-t border-[#FAF7F2] flex flex-col items-center justify-center">
-                  <Barcode value={printBatch.kode_batch} width={1.4} height={38} displayValue={false} />
-                  <span className="text-[9px] font-mono tracking-widest text-[#5E4E42] mt-1 font-bold">
-                    *{printBatch.kode_batch}*
-                  </span>
+                {/* QR Code Section (Otomatis Mengisi Kode Batch saat di-scan) */}
+                <div className="pt-2 border-t border-[#FAF7F2]">
+                  <QRCodeLabel value={printBatch.kode_batch} size={80} />
                 </div>
               </div>
             </div>
