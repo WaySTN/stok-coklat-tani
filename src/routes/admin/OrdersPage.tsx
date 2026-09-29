@@ -180,6 +180,13 @@ export function AdminOrdersPage() {
   // Mutation to Cancel/Delete Pending Pre-Order
   const deleteOrderMutation = useMutation({
     mutationFn: async (order: any) => {
+      // 1. Bersihkan terlebih dahulu catatan stock_out jika pernah terbuat (misal sisa alokasi sebelumnya)
+      await supabase
+        .from('stock_out')
+        .delete()
+        .eq('order_id', order.id)
+
+      // 2. Hapus pesanan dari tabel orders
       const { error } = await supabase
         .from('orders')
         .delete()
@@ -189,6 +196,9 @@ export function AdminOrdersPage() {
     },
     onSuccess: (_, order) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] })
+      queryClient.invalidateQueries({ queryKey: ['batches'] })
+      queryClient.invalidateQueries({ queryKey: ['stock-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['history'] })
       setSuccessAlertMsg(`Pesanan untuk ${order.nama_pembeli} sebesar ${order.jumlah_pesanan} Kg berhasil dibatalkan.`)
       setDeleteOrderTarget(null)
     },
