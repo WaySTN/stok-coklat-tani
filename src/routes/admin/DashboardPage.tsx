@@ -4,6 +4,7 @@ import { StockSummary } from '../../components/StockSummary'
 import { LogOut, PackagePlus, PackageMinus, History, BookOpen, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { ConfirmModal } from '../../components/ConfirmModal'
+import { WatermarkFooter } from '../../components/WatermarkFooter'
 
 export function AdminDashboardPage() {
   const navigate = useNavigate()
@@ -130,6 +131,9 @@ export function AdminDashboardPage() {
             <ChevronRight className="w-4 h-4 text-neutral-400" />
           </div>
         </div>
+
+        {/* Monev / Abdimas Watermark Sponsor Banner */}
+        <WatermarkFooter className="mt-8" />
       </div>
 
       {/* Custom Reusable Confirm Modal */}

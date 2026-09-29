@@ -1,5 +1,6 @@
 import { StockSummary } from '../../components/StockSummary'
 import { Warehouse, Info, ShieldCheck, RefreshCw } from 'lucide-react'
+import { WatermarkFooter } from '../../components/WatermarkFooter'
 
 export function PublicDashboardPage() {
   return (
@@ -99,6 +100,9 @@ export function PublicDashboardPage() {
             </span>
           </div>
         </div>
+
+        {/* Monev / Abdimas Watermark Sponsor Banner */}
+        <WatermarkFooter className="mt-4" />
       </div>
     </div>
   )
