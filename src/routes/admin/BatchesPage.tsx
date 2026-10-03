@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ConfirmModal } from '../../components/ConfirmModal'
 import { FarmerManager } from '../../components/FarmerManager'
 import { QRCodeLabel } from '../../components/QRCodeLabel'
+import { SearchableFarmerSelect } from '../../components/SearchableFarmerSelect'
 
 const batchSchema = z.object({
   kode_batch: z.string().min(1, 'Kode batch wajib diisi'),
@@ -93,11 +94,12 @@ export function AdminBatchesPage() {
     }
   })
 
-  // Watch jenis_coklat for segmented control UI
+  // Watch fields for reactive UI
   const watchJenisCoklat = watch('jenis_coklat')
+  const watchAsalPetani = watch('asal_petani')
 
   // Fetch Registered Farmers
-  const { data: farmers } = useQuery({
+  const { data: farmers, isLoading: isLoadingFarmers } = useQuery({
     queryKey: ['farmers'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -111,7 +113,7 @@ export function AdminBatchesPage() {
 
   // Handler saat farmer dipilih dari FarmerManager
   const handleSelectFarmer = (farmerName: string) => {
-    setValue('asal_petani', farmerName)
+    setValue('asal_petani', farmerName, { shouldValidate: true, shouldDirty: true })
   }
 
   // Fetch Data Batches Aktif
@@ -520,20 +522,18 @@ export function AdminBatchesPage() {
                     </button>
                   </label>
                   
-                  <div className="relative">
-                    <select
-                      {...register('asal_petani')}
-                      className="w-full text-sm px-3.5 py-2.5 rounded-2xl border transition-all duration-300 outline-none bg-[#FAF7F2]"
-                      style={{ borderColor: '#EFECE6', color: '#2E2015' }}
-                    >
-                      <option value="">-- Pilih Pengirim --</option>
-                      {farmers?.map((f) => (
-                        <option key={f.id} value={f.nama}>
-                          {f.nama} {f.no_hp ? `(${f.no_hp})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* Hidden input for react-hook-form registration & validation */}
+                  <input type="hidden" {...register('asal_petani')} />
+                  
+                  <SearchableFarmerSelect
+                    farmers={farmers}
+                    isLoading={isLoadingFarmers}
+                    value={watchAsalPetani || ''}
+                    onChange={(val) => setValue('asal_petani', val, { shouldValidate: true, shouldDirty: true })}
+                    error={errors.asal_petani?.message}
+                    placeholder="-- Cari / Pilih Pengirim --"
+                    onOpenFarmerManager={() => setIsFarmerManagerOpen(true)}
+                  />
                   {errors.asal_petani && <p className="text-red-600 text-[10px] font-semibold mt-1 pl-1">{errors.asal_petani.message}</p>}
                 </div>
                 
