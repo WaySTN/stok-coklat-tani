@@ -25,7 +25,7 @@ export function PublicDashboardPage() {
         <div className="relative z-10 flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-widest rounded-md" style={{ backgroundColor: 'rgba(212, 163, 115, 0.2)', color: '#D4A373' }}>
-              SITANDES
+              SIKAKAO
             </span>
             <span className="flex h-2 w-2 rounded-full bg-emerald-500">
               <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-emerald-400 opacity-75"></span>

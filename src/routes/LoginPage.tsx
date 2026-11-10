@@ -75,7 +75,7 @@ export function LoginPage() {
             <Leaf className="w-7 h-7 text-[#F5EFE6]" />
           </div>
           <h1 className="text-3xl font-serif font-black tracking-tight" style={{ color: '#4A2C2A' }}>
-            SITANDES Coklat
+            SIKAKAO Coklat
           </h1>
           <p className="text-xs font-semibold uppercase tracking-wider mt-1.5" style={{ color: '#8A7968' }}>
             Panel Pengelola Gudang
