@@ -15,20 +15,25 @@ export default defineConfig({
         enabled: true
       },
       manifest: {
-        name: 'Stok Coklat Tani',
-        short_name: 'Stok Coklat',
+        name: 'SIKAKAO - Stok Coklat Mulyojati',
+        short_name: 'SIKAKAO',
         theme_color: '#4A2C2A',
         background_color: '#F5EFE6',
         display: 'standalone',
         icons: [
           {
-            src: '/icon-192.svg',
+            src: '/icon-192.png',
             sizes: '192x192',
-            type: 'image/svg+xml'
+            type: 'image/png'
           },
           {
-            src: '/icon-512.svg',
+            src: '/icon-512.png',
             sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: '/favicon.svg',
+            sizes: 'any',
             type: 'image/svg+xml'
           }
         ]
